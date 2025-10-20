@@ -1,33 +1,108 @@
 // src/pages/OrdersPage.jsx
 
-import React from 'react';
-import { FiBell, FiUser, FiPackage, FiClock, FiCheckCircle, FiLoader } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { FiBell, FiUser, FiPackage, FiClock, FiCheckCircle, FiLoader, FiAlertCircle } from 'react-icons/fi';
+// --- ↓ PATH DIPERBAIKI ↓ ---
 import OrderStatCard from '../components/OrderStatCard.jsx';
 import RecentOrderItem from '../components/RecentOrderItem.jsx';
 
-// Data Dummy
-const recentOrders = [
-  { 
-    id: 'ORD-1234', 
-    status: { text: 'Pending Payment', type: 'pending' },
-    table: 'Table A12',
-    standName: 'Warung Pecah Sebelah',
-    items: ['Ayam Kawin x2', 'Es Teh Manis x2'],
-    time: '10 mins ago',
-    total: 90000 
-  },
-  { 
-    id: 'ORD-1235', 
-    status: { text: 'Paid', type: 'paid' },
-    table: 'Table B05',
-    standName: 'Noodle House',
-    items: ['Mie Ayam x1'],
-    time: '12 mins ago',
-    total: 25000 
-  },
-];
+// --- Impor fungsi API yang baru ---
+// --- ↓ PATH DIPERBAIKI ↓ ---
+import { getReportsSummary, getAllOrders, confirmCashPayment } from '../utils/api.jsx'; 
+
+// --- (Fungsi helper 'mapStatusToBadge' dan 'formatApiOrder') ---
+
+const mapStatusToBadge = (status) => {
+  switch (status) {
+    case 'AWAITING_PAYMENT':
+      return { text: 'Pending Payment', type: 'pending' };
+    case 'PAID':
+      return { text: 'Paid', type: 'paid' };
+    case 'PROCESSING':
+      return { text: 'Processing', type: 'processing' };
+    case 'READY':
+      return { text: 'Ready', type: 'ready' };
+    case 'COMPLETED':
+      return { text: 'Completed', type: 'completed' };
+    case 'CANCELLED':
+    case 'EXPIRED':
+      return { text: status, type: 'cancelled' };
+    default:
+      return { text: status, type: 'pending' };
+  }
+};
+
+const formatApiOrder = (apiOrder) => {
+  const time = new Date(apiOrder.created_at).toLocaleString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+    weekday: 'short', // <-- Diubah dari 'day' menjadi 'weekday'
+    day: 'numeric',   // <-- Ditambahkan untuk menampilkan tanggal (misal: 20)
+    month: 'short'
+  });
+
+  return {
+    id: apiOrder.references_code,
+    orderPk: apiOrder.id,
+    status: mapStatusToBadge(apiOrder.status),
+    table: apiOrder.table ? apiOrder.table.code : 'Takeaway',
+    standName: apiOrder.tenant.name,
+    items: apiOrder.items.map(item => `${item.menu_item.name} x${item.qty}`),
+    time: time,
+    total: parseFloat(apiOrder.total),
+  };
+};
+
+// --- Komponen Utama ---
 
 const OrdersPage = () => {
+  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0, preparing: 0 });
+  const [recentOrdersList, setRecentOrdersList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // --- Fungsi fetchData ---
+  const fetchData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const [statsData, ordersData] = await Promise.all([
+        getReportsSummary(),
+        getAllOrders()
+      ]);
+
+      setStats(statsData.stats_today);
+      setRecentOrdersList(ordersData.map(formatApiOrder));
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // --- Fungsi handleConfirmPayment ---
+  const handleConfirmPayment = async (orderPk) => {
+    if (!window.confirm("Apakah Anda yakin ingin mengonfirmasi pembayaran tunai untuk order ini?")) {
+      return;
+    }
+
+    try {
+      await confirmCashPayment(orderPk);
+      alert('Pembayaran berhasil dikonfirmasi!');
+      fetchData(); // Muat ulang data
+
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+
+  // --- (Struktur JSX / render() ---
   return (
     <div className="flex-1 flex flex-col h-screen">
       <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
@@ -35,7 +110,6 @@ const OrdersPage = () => {
         <div className="flex items-center gap-4">
           <button className="relative text-gray-600 hover:text-gray-800">
             <FiBell size={22} />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
           </button>
           <button className="text-gray-600 hover:text-gray-800">
             <FiUser size={22} />
@@ -64,18 +138,36 @@ const OrdersPage = () => {
 
         {/* --- Order Stats Section --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <OrderStatCard icon={<FiPackage size={24}/>} count="48" title="Total Orders" color="blue" />
-          <OrderStatCard icon={<FiClock size={24}/>} count="8" title="Pending" color="orange" />
-          <OrderStatCard icon={<FiCheckCircle size={24}/>} count="35" title="Completed" color="green" />
-          <OrderStatCard icon={<FiLoader size={24}/>} count="5" title="Preparing" color="purple" />
+          <OrderStatCard icon={<FiPackage size={24}/>} count={loading ? '...' : stats.total} title="Total Orders (Today)" color="blue" />
+          <OrderStatCard icon={<FiClock size={24}/>} count={loading ? '...' : stats.pending} title="Pending" color="orange" />
+          <OrderStatCard icon={<FiLoader size={24}/>} count={loading ? '...' : stats.preparing} title="Preparing" color="purple" />
+          <OrderStatCard icon={<FiCheckCircle size={24}/>} count={loading ? '...' : stats.completed} title="Completed" color="green" />
         </div>
 
         {/* --- Recent Orders Section --- */}
         <div>
           <h2 className="text-lg font-bold text-gray-800 mb-4">Recent Orders</h2>
+          
+          {loading && <p className="text-gray-500">Loading data...</p>}
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <strong className="font-bold"><FiAlertCircle className="inline -mt-1 mr-2" />Error: </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+          
+          {!loading && !error && recentOrdersList.length === 0 && (
+             <p className="text-gray-500">Tidak ada pesanan terbaru.</p>
+          )}
+
           <div className="space-y-4">
-            {recentOrders.map((order, index) => (
-              <RecentOrderItem key={index} order={order} />
+            {recentOrdersList.map((order) => (
+              <RecentOrderItem 
+                key={order.id} 
+                order={order}
+                onConfirmPayment={() => handleConfirmPayment(order.orderPk)}
+              />
             ))}
           </div>
         </div>

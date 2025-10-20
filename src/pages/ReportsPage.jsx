@@ -1,34 +1,88 @@
 // src/pages/ReportsPage.jsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiBell, FiUser, FiDollarSign, FiList, FiTrendingUp, FiUsers } from 'react-icons/fi';
 import ReportStatCard from '../components/ReportStatCard.jsx';
 import SalesByHourChart from '../components/SalesByHourChart.jsx';
 import TopSellingProducts from '../components/TopSellingProducts.jsx';
 import StandPerformanceItem from '../components/StandPerformanceItem.jsx';
 
-// Data Dummy
-const salesData = [
-    { hour: '08', orders: 12 }, { hour: '09', orders: 24 }, { hour: '10', orders: 38 },
-    { hour: '11', orders: 56 }, { hour: '12', orders: 89 }, { hour: '13', orders: 67 },
-    { hour: '14', orders: 45 }, { hour: '15', orders: 34 },
-];
-const topProducts = [
-    { rank: 1, name: 'Ayam Kawin', sold: 156, revenue: 'Rp 6240K' },
-    { rank: 2, name: 'Nasi Goreng Special', sold: 143, revenue: 'Rp 5005K' },
-    { rank: 3, name: 'Ayam Lari', sold: 128, revenue: 'Rp 4864K' },
-    { rank: 4, name: 'Mie Ayam', sold: 98, revenue: 'Rp 2450K' },
-    { rank: 5, name: 'Dimsum Mentai', sold: 87, revenue: 'Rp 2610K' },
-];
-const standPerformanceData = [
-    { name: 'Warung Pecah Sebelah', orders: 125, revenue: 'Rp 4250K', growth: '+15% growth', barPercentage: 80 },
-    { name: 'Ayam Crispy Corner', orders: 98, revenue: 'Rp 3720K', growth: '+12% growth', barPercentage: 70 },
-    { name: 'Noodle House', orders: 87, revenue: 'Rp 2680K', growth: '+8% growth', barPercentage: 55 },
-    { name: 'Juice Bar', orders: 48, revenue: 'Rp 1800K', growth: '+15% growth', barPercentage: 90 },
-];
+// 1. Impor fungsi API
+import { getReportsSummary } from '../utils/api.jsx';
 
+
+// Helper untuk format mata uang
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('id-ID', { 
+        style: 'currency', 
+        currency: 'IDR', 
+        minimumFractionDigits: 0 
+    }).format(value);
+}
 
 const ReportsPage = () => {
+    // 2. Tambahkan state untuk data, loading, dan error
+    const [reportData, setReportData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // 3. Buat fungsi untuk mengambil data dari backend
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                const data = await getReportsSummary();
+                setReportData(data);
+
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []); // [] berarti hanya dijalankan sekali saat mount
+
+    // 4. Tampilkan status loading dan error
+    if (loading) {
+        return <div className="flex-1 flex items-center justify-center h-screen">Loading...</div>;
+    }
+    
+    if (error) {
+        return <div className="flex-1 flex items-center justify-center h-screen text-red-500">Error: {error}</div>;
+    }
+
+    // 5. Jika data tidak ada (setelah loading selesai), tampilkan pesan
+    if (!reportData) {
+        return <div className="flex-1 flex items-center justify-center h-screen">No report data found.</div>;
+    }
+
+    // 6. Siapkan data untuk komponen anak
+    
+    // a. Untuk TopSellingProducts (membuat format agar sesuai dgn props yg diharapkan)
+    const formattedTopProducts = reportData.top_selling_products.map((product, index) => ({
+        rank: index + 1,
+        name: product.menu_item__name,
+        sold: product.total_sold,
+        revenue: formatCurrency(product.total_revenue)
+    }));
+
+    // b. Untuk StandPerformance (menghitung persentase bar)
+    const standData = reportData.stand_performance || [];
+    const maxRevenue = standData.length > 0 
+        ? Math.max(...standData.map(s => s.revenue || 0)) 
+        : 0;
+        
+    const formattedStandData = standData.map(stand => ({
+        name: stand.name,
+        orders: stand.orders,
+        revenue: formatCurrency(stand.revenue || 0),
+        barPercentage: maxRevenue > 0 ? ((stand.revenue || 0) / maxRevenue) * 100 : 0 
+    }));
+
     return (
         <div className="flex-1 flex flex-col h-screen">
             <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
@@ -45,25 +99,41 @@ const ReportsPage = () => {
             </header>
 
             <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
-                {/* --- Stats Section --- */}
+                {/* --- Stats Section (Data dari state) --- */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                    <ReportStatCard icon={<FiDollarSign />} value="Rp 12,450,000" title="Total Revenue" change="+8% from last week" />
-                    <ReportStatCard icon={<FiList />} value="358" title="Total Orders" change="+5% from last week" />
-                    <ReportStatCard icon={<FiTrendingUp />} value="Rp 34,750" title="Avg Order Value" change="+8% from last week" />
-                    <ReportStatCard icon={<FiUsers />} value="156" title="Active Customers" change="+12% from last week" />
+                    <ReportStatCard 
+                        icon={<FiDollarSign />} 
+                        value={formatCurrency(reportData.main_stats.total_revenue)} 
+                        title="Total Revenue" 
+                    />
+                    <ReportStatCard 
+                        icon={<FiList />} 
+                        value={reportData.main_stats.total_orders} 
+                        title="Total Orders" 
+                    />
+                    <ReportStatCard 
+                        icon={<FiTrendingUp />} 
+                        value={formatCurrency(reportData.main_stats.avg_order_value)} 
+                        title="Avg Order Value" 
+                    />
+                    <ReportStatCard 
+                        icon={<FiUsers />} 
+                        value={reportData.main_stats.active_customers} 
+                        title="Active Customers" 
+                    />
                 </div>
 
-                {/* --- Middle Section --- */}
+                {/* --- Middle Section (Data dari state) --- */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <SalesByHourChart data={salesData} />
-                    <TopSellingProducts products={topProducts} />
+                    <SalesByHourChart data={reportData.sales_by_hour} />
+                    <TopSellingProducts products={formattedTopProducts} />
                 </div>
 
-                {/* --- Stand Performance Section --- */}
+                {/* --- Stand Performance Section (Data dari state) --- */}
                 <div>
                     <h2 className="text-lg font-bold text-gray-800 mb-4">Stand Performance</h2>
                     <div className="space-y-4">
-                        {standPerformanceData.map((stand, index) => (
+                        {formattedStandData.map((stand, index) => (
                             <StandPerformanceItem key={index} stand={stand} />
                         ))}
                     </div>
