@@ -1,5 +1,9 @@
+// src/components/StatCard.jsx
+
 import React from 'react';
 
+// --- PERUBAHAN ---
+// Prop 'change' sekarang opsional
 const StatCard = ({ icon, title, value, change, changeColor = 'text-gray-500' }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -12,7 +16,11 @@ const StatCard = ({ icon, title, value, change, changeColor = 'text-gray-500' })
           {icon}
         </div>
       </div>
-      <p className={`text-xs mt-2 ${changeColor}`}>{change}</p>
+      {/* Tampilkan baris ini hanya jika 'change' ada isinya */}
+      {change && (
+        <p className={`text-xs mt-2 ${changeColor}`}>{change}</p>
+      )}
+      {/* --- AKHIR PERUBAHAN --- */}
     </div>
   );
 };

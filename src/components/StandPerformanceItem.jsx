@@ -2,8 +2,9 @@
 
 import React from 'react';
 
+// Hapus 'growth' dari props
 const StandPerformanceItem = ({ stand }) => {
-  const { name, orders, revenue, growth, barPercentage } = stand;
+  const { name, orders, revenue, barPercentage } = stand;
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4">
@@ -14,7 +15,7 @@ const StandPerformanceItem = ({ stand }) => {
         </div>
         <div className="text-right">
           <p className="font-bold text-lg text-gray-800">{revenue}</p>
-          <p className="text-xs font-semibold text-green-500">{growth}</p>
+          {/* Baris 'growth' dihapus */}
         </div>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2">
