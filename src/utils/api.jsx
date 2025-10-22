@@ -69,4 +69,12 @@ export const getAllOrders = () => request('/api/orders/all/');
 // --- PERUBAHAN ---
 // Menggunakan orderUuid (string) sesuai dengan backend, bukan orderPk (integer)
 export const confirmCashPayment = (orderUuid) => request(`/api/orders/${orderUuid}/confirm-cash/`, { method: 'POST' });
+
+
+// === FUNGSI UNTUK USERS ===
+export const getUsers = () => request('/api/users/');
+export const getUsersSummary = () => request('/api/users/summary/');
+export const addUser = (userData) => request('/api/users/', { method: 'POST', body: JSON.stringify(userData) });
+export const updateUser = (userId, userData) => request(`/api/users/${userId}/`, { method: 'PATCH', body: JSON.stringify(userData) });
+export const deleteUser = (userId) => request(`/api/users/${userId}/`, { method: 'DELETE' });
 // --- AKHIR PERUBAHAN ---

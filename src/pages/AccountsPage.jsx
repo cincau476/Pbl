@@ -1,7 +1,9 @@
 // src/pages/AccountsPage.jsx
+// (Ganti seluruh file dengan ini)
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// --- PERUBAHAN 1: Hapus 'axios' dan impor 'api' ---
+import * as api from '../utils/api.jsx'; 
 
 // ====================================================================
 // === PENGGANTI REACT-ICONS (SVG INLINE) ===
@@ -45,11 +47,9 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const dataToSave = { ...formData };
-    // Saat mode edit, jangan kirim password jika field-nya kosong
     if (initialData && !formData.password) {
       delete dataToSave.password;
     }
-    // Panggil onSave dengan satu argumen (objek data)
     onSave(dataToSave);
   };
 
@@ -147,8 +147,6 @@ const SummaryCard = ({ title, count, description, borderColor }) => {
 // === KOMPONEN UTAMA HALAMAN AKUN ===
 // ====================================================================
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
-
 const AccountsPage = () => {
   const [users, setUsers] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -158,20 +156,21 @@ const AccountsPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // --- PERUBAHAN 2: Gunakan 'api' untuk fetchData ---
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
         const [usersResponse, summaryResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/users/`),
-          axios.get(`${API_BASE_URL}/users/summary/`)
+          api.getUsers(),       // <-- Diubah
+          api.getUsersSummary() // <-- Diubah
         ]);
-        setUsers(usersResponse.data);
-        setSummary(summaryResponse.data);
+        setUsers(usersResponse);
+        setSummary(summaryResponse);
       } catch (err) {
         console.error("Gagal mengambil data akun:", err);
-        setError("Tidak dapat memuat data. Pastikan server backend Anda berjalan.");
+        setError(`Tidak dapat memuat data: ${err.message}`); // Tampilkan pesan error
       } finally {
         setLoading(false);
       }
@@ -179,42 +178,41 @@ const AccountsPage = () => {
     fetchData();
   }, []);
 
+  // --- PERUBAHAN 3: Gunakan 'api' untuk handleDeleteUser ---
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/users/${userId}/`);
+        await api.deleteUser(userId); // <-- Diubah
         setUsers(users.filter(user => user.id !== userId));
       } catch (err) {
         console.error("Gagal menghapus pengguna:", err);
-        alert("Failed to delete user.");
+        alert(`Failed to delete user: ${err.message}`);
       }
     }
   };
   
-  // =======================================================
-  // === PERBAIKAN LOGIKA: Satu fungsi handleSaveUser ===
-  // =======================================================
+  // --- PERUBAHAN 4: Gunakan 'api' untuk handleSaveUser ---
   const handleSaveUser = async (formData) => {
     if (editingUser) {
-      // MODE EDIT: Kirim request PATCH dengan ID
+      // MODE EDIT
       try {
-        const response = await axios.patch(`${API_BASE_URL}/users/${editingUser.id}/`, formData);
-        setUsers(users.map(user => user.id === editingUser.id ? response.data : user));
+        const response = await api.updateUser(editingUser.id, formData); // <-- Diubah
+        setUsers(users.map(user => user.id === editingUser.id ? response : user));
         setIsModalOpen(false);
         setEditingUser(null);
       } catch (err) {
-        console.error("Gagal mengupdate pengguna:", err.response?.data);
-        alert(`Gagal update: ${JSON.stringify(err.response?.data)}`);
+        console.error("Gagal mengupdate pengguna:", err);
+        alert(`Gagal update: ${err.message}`);
       }
     } else {
-      // MODE BUAT BARU: Kirim request POST
+      // MODE BUAT BARU
       try {
-        const response = await axios.post(`${API_BASE_URL}/users/`, formData);
-        setUsers([...users, response.data]);
+        const response = await api.addUser(formData); // <-- Diubah
+        setUsers([...users, response]);
         setIsModalOpen(false);
       } catch (err) {
-        console.error("Gagal menambah pengguna:", err.response?.data);
-        alert(`Gagal menyimpan: ${JSON.stringify(err.response?.data)}`);
+        console.error("Gagal menambah pengguna:", err);
+        alert(`Gagal menyimpan: ${err.message}`);
       }
     }
   };
@@ -231,7 +229,7 @@ const AccountsPage = () => {
   
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) // <-- Dibuat lebih aman
   );
 
   if (loading) {
@@ -337,4 +335,3 @@ const AccountsPage = () => {
 };
 
 export default AccountsPage;
-
