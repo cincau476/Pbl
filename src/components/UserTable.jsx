@@ -3,7 +3,6 @@
 import React from 'react';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
-// Komponen kecil yang bisa digunakan kembali untuk badge peran (role)
 const RoleBadge = ({ role }) => {
   const roleColors = {
     Admin: 'bg-blue-100 text-blue-700',
@@ -33,27 +32,36 @@ const UserTable = ({ users }) => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user, index) => (
-              <tr key={index} className="bg-white border-b hover:bg-gray-50">
+            {users.map((user) => (
+              <tr key={user.id} className="bg-white border-b hover:bg-gray-50">
                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-xs">
-                      {user.name.charAt(0)}
+                      {/* === PERBAIKAN 1: Gunakan 'username' bukan 'name' === */}
+                      {user.username ? user.username.charAt(0).toUpperCase() : '?'}
                     </div>
-                    {user.name}
+                    {/* === PERBAIKAN 2: Tampilkan 'username' === */}
+                    {user.username}
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <RoleBadge role={user.role} />
                 </td>
                 <td className="px-6 py-4 text-blue-600 underline cursor-pointer">{user.email}</td>
-                <td className="px-6 py-4">{user.phone}</td>
+                {/* Kolom 'phone' tidak ada di API User, kita kosongkan sementara */}
+                <td className="px-6 py-4">-</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center justify-center gap-4">
-                    <button className="flex items-center gap-1 text-blue-600 hover:underline">
+                    <button
+                      onClick={() => onEdit(user)} // Memanggil fungsi dari props dengan data user
+                      className="flex items-center gap-1 text-blue-600 hover:underline">
                       <FiEdit size={16}/> Edit
                     </button>
-                    <button className="flex items-center gap-1 text-red-600 hover:underline">
+                    {/* 2. Tambahkan onClick ke tombol Delete */}
+                    <button 
+                      onClick={() => onDelete(user.id)}
+                      className="flex items-center gap-1 text-red-600 hover:underline"
+                    >
                       <FiTrash2 size={16}/> Delete
                     </button>
                   </div>
