@@ -44,6 +44,7 @@ const formatApiOrder = (apiOrder) => {
   return {
     id: apiOrder.references_code,
     orderPk: apiOrder.id,
+    uuid: apiOrder.uuid,
     status: mapStatusToBadge(apiOrder.status),
     table: apiOrder.table ? apiOrder.table.code : 'Takeaway',
     standName: apiOrder.tenant.name,
@@ -87,13 +88,14 @@ const OrdersPage = () => {
   }, []);
 
   // --- Fungsi handleConfirmPayment ---
-  const handleConfirmPayment = async (orderPk) => {
+  const handleConfirmPayment = async (orderUuid) => {
     if (!window.confirm("Apakah Anda yakin ingin mengonfirmasi pembayaran tunai untuk order ini?")) {
       return;
     }
 
     try {
-      await confirmCashPayment(orderPk);
+      // Sekarang fungsi ini akan memanggil /api/orders/<UUID_STRING_PANJANG>/confirm-cash/
+      await confirmCashPayment(orderUuid); 
       alert('Pembayaran berhasil dikonfirmasi!');
       fetchData(); // Muat ulang data
 
@@ -166,7 +168,7 @@ const OrdersPage = () => {
               <RecentOrderItem 
                 key={order.id} 
                 order={order}
-                onConfirmPayment={() => handleConfirmPayment(order.orderPk)}
+                onConfirmPayment={() => handleConfirmPayment(order.uuid)}
               />
             ))}
           </div>

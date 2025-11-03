@@ -68,7 +68,7 @@ export const getAllOrders = () => request('/api/all/');
 
 // --- PERUBAHAN ---
 // Menggunakan orderUuid (string) sesuai dengan backend, bukan orderPk (integer)
-export const confirmCashPayment = (orderUuid) => request(`/api/orders/${orderUuid}/confirm-cash/`, { method: 'POST' });
+export const confirmCashPayment = (orderUuid) => request(`/api/${orderUuid}/confirm-cash/`, { method: 'POST' });
 
 
 // === FUNGSI UNTUK USERS ===
