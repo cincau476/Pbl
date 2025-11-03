@@ -1,17 +1,23 @@
 // src/components/Sidebar.jsx
 
-import React from 'react';
+// --- PERUBAHAN 1: Impor 'useState' dari React dan 'FiLogOut' ---
+import React, { useState } from 'react';
 import { 
   FiGrid, FiUsers, FiShoppingCart, FiCreditCard, 
-  FiBarChart2, FiChevronLeft, FiChevronRight 
+  FiBarChart2, FiChevronLeft, FiChevronRight, FiLogOut 
 } from 'react-icons/fi';
+// --- AKHIR PERUBAHAN 1 ---
+
 import { MdStorefront } from 'react-icons/md';
 
-// 1. Impor file gambar logo Anda dari folder assets
 import logo from '../assets/logo.png'; 
 
 const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage }) => {
   
+  // --- PERUBAHAN 2: Tambahkan state untuk menu akun ---
+  const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
+  // --- AKHIR PERUBAHAN 2 ---
+
   const navItems = [
     { id: 'dashboard', icon: <FiGrid size={28} />, name: 'Dashboard' },
     { id: 'accounts', icon: <FiUsers size={28} />, name: 'Accounts' },
@@ -21,17 +27,23 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage }) => {
     { id: 'reports', icon: <FiBarChart2 size={28} />, name: 'Reports' },
   ];
 
+  // --- PERUBAHAN 3: Tambahkan fungsi handleLogout ---
+  // Fungsi ini menghapus token dari local storage dan me-reload halaman,
+  // sama seperti logika yang ada di LoginPage.jsx dan api.jsx
+  const handleLogout = () => {
+    if (window.confirm('Apakah Anda yakin ingin keluar?')) {
+      localStorage.removeItem('authToken');
+      window.location.reload();
+    }
+  };
+  // --- AKHIR PERUBAHAN 3 ---
+
   return (
     <div className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${isCollapsed ? 'w-24' : 'w-72'}`}>
       
       <div className={`p-4 flex items-center border-b h-18 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         
-        {/* =======================================================
-          === PERUBAHAN UTAMA: MENGGANTI IKON DENGAN GAMBAR LOGO ===
-          =======================================================
-        */}
         <div className={`flex items-center overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0' : 'w-full'}`}>
-          {/* 2. Gunakan tag <img> untuk menampilkan logo */}
           <img src={logo} alt="Orderin Logo" className="h-6" />
         </div>
 
@@ -72,8 +84,32 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage }) => {
         </nav>
       </div>
 
-      <div className={`p-4 border-t flex ${isCollapsed ? 'justify-center' : ''}`}>
-        <div className="flex items-center overflow-hidden">
+      {/* --- PERUBAHAN 4: Modifikasi Bagian Akun --- */}
+      {/* 1. Tambahkan 'relative' untuk positioning pop-up */}
+      <div className={`relative p-4 border-t ${isCollapsed ? 'flex justify-center' : ''}`}>
+        
+        {/* 2. Tambahkan Pop-up Menu Logout (hanya muncul jika diklik dan sidebar tidak terlipat) */}
+        {isAccountMenuOpen && !isCollapsed && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 p-4 bg-white rounded-lg shadow-lg border z-10">
+            <p className="font-semibold text-sm text-gray-800">Admin User</p>
+            <p className="text-xs text-gray-500 mb-4">admin@orderin.app</p>
+            
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+            >
+              <FiLogOut size={16} />
+              <span>Log Out</span>
+            </button>
+          </div>
+        )}
+
+        {/* 3. Ubah 'div' info akun menjadi 'button' */}
+        <button
+          onClick={() => setAccountMenuOpen(prev => !prev)} // Toggle menu
+          disabled={isCollapsed} // Nonaktifkan jika sidebar terlipat
+          className={`flex items-center w-full overflow-hidden text-left p-2 rounded-lg ${isCollapsed ? 'justify-center' : ''} ${!isCollapsed ? 'hover:bg-gray-100' : ''} transition-colors`}
+        >
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
             A
           </div>
@@ -81,7 +117,8 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage }) => {
             <p className="font-semibold text-sm text-gray-800 whitespace-nowrap">Admin User</p>
             <p className="text-xs text-gray-500 whitespace-nowrap">admin@orderin.app</p>
           </div>
-        </div>
+        </button>
+        {/* --- AKHIR PERUBAHAN 4 --- */}
       </div>
     </div>
   );

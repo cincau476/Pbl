@@ -64,7 +64,7 @@ export const deleteMenuItem = (standId, menuId) => request(`/api/stands/${standI
 
 // === FUNGSI UNTUK ORDERS & REPORTS ===
 export const getReportsSummary = () => request('/api/reports/summary/');
-export const getAllOrders = () => request('/api/orders/all/');
+export const getAllOrders = () => request('/api/all/');
 
 // --- PERUBAHAN ---
 // Menggunakan orderUuid (string) sesuai dengan backend, bukan orderPk (integer)
