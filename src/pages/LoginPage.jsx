@@ -10,7 +10,9 @@ const FiLock = (props) => (
 );
 
 // Endpoint login Anda
-const API_LOGIN_URL = 'http://127.0.0.1:8000/api/token-auth/';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+// Tentukan endpoint login
+const API_LOGIN_URL = `${API_BASE_URL}/api/token-auth/`;
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
