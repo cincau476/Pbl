@@ -1,30 +1,27 @@
-// src/api.jsx
+// src/utils/api.jsx
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+// --- PERUBAHAN: Gunakan .env ---
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
 
-// --- Helper Baru: Ambil token dari localStorage ---
-const getAuthToken = () => {
-  return localStorage.getItem('authToken');
-}
+// --- PERUBAHAN: Hapus getAuthToken ---
+// const getAuthToken = () => { ... }
 
 // Fungsi helper untuk request (Dimodifikasi)
 async function request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    const token = getAuthToken();
+    // const token = getAuthToken(); // <-- HAPUS
 
     const headers = {
-        // Hapus 'Content-Type' untuk FormData, browser akan mengaturnya
         ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers,
     };
 
-    if (token) {
-      headers['Authorization'] = `Token ${token}`;
-    }
-
+    // --- PERUBAHAN: Hapus blok 'if (token)' ---
+    
     const config = {
         ...options,
         headers,
+        credentials: 'include', // <-- PERUBAHAN: Ini penting agar 'fetch' mengirim cookie
     };
 
     try {
@@ -36,7 +33,6 @@ async function request(endpoint, options = {}) {
             } catch (jsonError) {
               throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
             }
-            // Coba ambil 'detail' atau 'message' atau serialisasi error
             const errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
             throw new Error(errorMessage);
         }
@@ -65,11 +61,7 @@ export const deleteMenuItem = (standId, menuId) => request(`/api/stands/${standI
 // === FUNGSI UNTUK ORDERS & REPORTS ===
 export const getReportsSummary = () => request('/api/reports/summary/');
 export const getAllOrders = () => request('/api/all/');
-
-// --- PERUBAHAN ---
-// Menggunakan orderUuid (string) sesuai dengan backend, bukan orderPk (integer)
 export const confirmCashPayment = (orderUuid) => request(`/api/${orderUuid}/confirm-cash/`, { method: 'POST' });
-
 
 // === FUNGSI UNTUK USERS ===
 export const getUsers = () => request('/api/users/');
@@ -77,4 +69,15 @@ export const getUsersSummary = () => request('/api/users/summary/');
 export const addUser = (userData) => request('/api/users/', { method: 'POST', body: JSON.stringify(userData) });
 export const updateUser = (userId, userData) => request(`/api/users/${userId}/`, { method: 'PATCH', body: JSON.stringify(userData) });
 export const deleteUser = (userId) => request(`/api/users/${userId}/`, { method: 'DELETE' });
-// --- AKHIR PERUBAHAN ---
+
+// --- PERUBAHAN: TAMBAHKAN EXPORT BARU UNTUK AUTENTIKASI ---
+export const login = (username, password) => request('/api/auth/login/', { 
+    method: 'POST', 
+    body: JSON.stringify({ username, password }) 
+});
+
+export const logout = () => request('/api/auth/logout/', { 
+    method: 'POST' 
+});
+
+export const checkAuth = () => request('/api/auth/user/');

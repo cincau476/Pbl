@@ -1,5 +1,7 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
+// --- PERUBAHAN: Impor api ---
+import * as api from '../utils/api.jsx';
 
 // --- Ikon SVG (agar tidak perlu install react-icons) ---
 const FiUser = (props) => (
@@ -9,12 +11,11 @@ const FiLock = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
 );
 
-// Endpoint login Anda
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-// Tentukan endpoint login
-const API_LOGIN_URL = `${API_BASE_URL}/api/token-auth/`;
+// --- PERUBAHAN: Hapus API_LOGIN_URL ---
+// const API_LOGIN_URL = 'http://127.0.0.1:8000/api/token-auth/';
 
-const LoginPage = () => {
+// --- PERUBAHAN: Terima prop 'onLoginSuccess' ---
+const LoginPage = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -26,29 +27,20 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const response = await fetch(API_LOGIN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+      // --- PERUBAHAN: Panggil api.login ---
+      const userData = await api.login(username, password);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.non_field_errors || 'Username atau password salah.');
-      }
+      // --- PERUBAHAN: Hapus localStorage ---
+      // localStorage.setItem('authToken', data.token);
 
-      const data = await response.json();
-      
-      // Simpan token ke localStorage
-      localStorage.setItem('authToken', data.token);
+      // --- PERUBAHAN: Panggil fungsi prop ---
+      onLoginSuccess(userData);
 
-      // Muat ulang halaman, App.jsx akan mendeteksi token
-      window.location.reload();
+      // --- PERUBAHAN: Hapus reload ---
+      // window.location.reload();
 
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Username atau password salah.');
     } finally {
       setLoading(false);
     }

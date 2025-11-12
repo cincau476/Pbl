@@ -6,17 +6,14 @@ import {
   FiGrid, FiUsers, FiShoppingCart, FiCreditCard, 
   FiBarChart2, FiChevronLeft, FiChevronRight, FiLogOut 
 } from 'react-icons/fi';
-// --- AKHIR PERUBAHAN 1 ---
-
 import { MdStorefront } from 'react-icons/md';
 
-import logo from '../assets/logo.png'; 
+import logo from '../assets/logo.png';
 
-const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage }) => {
+// --- PERUBAHAN: Terima 'user' dan 'onLogout' dari props ---
+const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLogout }) => {
   
-  // --- PERUBAHAN 2: Tambahkan state untuk menu akun ---
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
-  // --- AKHIR PERUBAHAN 2 ---
 
   const navItems = [
     { id: 'dashboard', icon: <FiGrid size={28} />, name: 'Dashboard' },
@@ -27,16 +24,12 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage }) => {
     { id: 'reports', icon: <FiBarChart2 size={28} />, name: 'Reports' },
   ];
 
-  // --- PERUBAHAN 3: Tambahkan fungsi handleLogout ---
-  // Fungsi ini menghapus token dari local storage dan me-reload halaman,
-  // sama seperti logika yang ada di LoginPage.jsx dan api.jsx
-  const handleLogout = () => {
-    if (window.confirm('Apakah Anda yakin ingin keluar?')) {
-      localStorage.removeItem('authToken');
-      window.location.reload();
-    }
+  // --- PERUBAHAN: Gunakan fungsi onLogout dari props ---
+  const handleLogoutClick = () => {
+    // Hapus konfirmasi 'window.confirm' di sini, karena sudah dipindah ke App.jsx
+    onLogout();
   };
-  // --- AKHIR PERUBAHAN 3 ---
+  // --- AKHIR PERUBAHAN ---
 
   return (
     <div className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${isCollapsed ? 'w-24' : 'w-72'}`}>
