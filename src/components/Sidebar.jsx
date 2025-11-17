@@ -88,7 +88,7 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLog
             <p className="text-xs text-gray-500 mb-4">admin@orderin.app</p>
             
             <button
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
             >
               <FiLogOut size={16} />
