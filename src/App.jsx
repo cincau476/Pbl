@@ -1,6 +1,5 @@
 // src/App.jsx
 
-// --- PERUBAHAN: Impor useState dan useEffect ---
 import React, { useState, useEffect } from 'react'; 
 import Sidebar from './components/Sidebar.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
@@ -9,53 +8,62 @@ import StandsAndMenuPage from './pages/StandsAndMenuPage.jsx';
 import OrdersPage from './pages/OrdersPage.jsx';
 import PaymentsPage from './pages/PaymentsPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
-import LoginPage from './pages/LoginPage.jsx';
-// --- PERUBAHAN: Impor api ---
+// import LoginPage from './pages/LoginPage.jsx'; // <-- HAPUS INI
+
 import * as api from './utils/api.jsx';
+
+// Ganti URL ini sesuai alamat frontend customer kamu
+const CUSTOMER_LOGIN_URL = 'http://localhost:5173/login';
 
 function App() {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activePage, setActivePage] = useState('dashboard');
-
-  // --- PERUBAHAN BESAR PADA LOGIKA AUTENTIKASI ---
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // State untuk loading pengecekan auth
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Cek status login (via cookie) saat aplikasi pertama kali dimuat
+  // --- LOGIKA PROTEKSI HALAMAN ---
   useEffect(() => {
-    api.checkAuth()
-      .then(userData => {
-        setUser(userData); // Jika berhasil, user login
-      })
-      .catch(() => {
-        setUser(null); // Jika gagal (cookie tidak ada/valid), user tidak login
-      })
-      .finally(() => {
-        setIsLoading(false); // Selesai loading
-      });
-  }, []); // [] berarti hanya jalan sekali saat mount
+    const verifyUser = async () => {
+      try {
+        // 1. Cek ke backend apakah ada session aktif
+        const userData = await api.checkAuth();
+        
+        // 2. Jika ada, pastikan dia BUKAN customer biasa
+        // (Opsional: tergantung kebutuhan, tapi biasanya customer gak boleh masuk sini)
+        if (userData.user.role === 'customer') {
+           throw new Error("Unauthorized access");
+        }
 
-  // Fungsi untuk logout (dipanggil dari Sidebar)
+        // 3. Jika lolos, set user
+        setUser(userData.user);
+      } catch (error) {
+        // 4. JIKA GAGAL (Tidak login / Session habis / Bukan Admin):
+        // Tendang ke halaman login Customer
+        console.warn("User not authenticated, redirecting...", error);
+        window.location.href = CUSTOMER_LOGIN_URL;
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verifyUser();
+  }, []); 
+
+  // Fungsi Logout
   const handleLogout = async () => {
-    // Pindahkan window.confirm ke sini agar lebih masuk akal
     if (window.confirm('Apakah Anda yakin ingin keluar?')) {
         try {
             await api.logout();
+            // Setelah logout sukses, lempar balik ke login customer
+            window.location.href = CUSTOMER_LOGIN_URL;
         } catch (err) {
             console.error("Logout error:", err);
-        } finally {
-            setUser(null); // Set user menjadi null (kembali ke halaman login)
+            // Tetap lempar meski error (safety net)
+            window.location.href = CUSTOMER_LOGIN_URL;
         }
     }
   };
   
-  // Fungsi ini dipanggil oleh LoginPage saat login berhasil
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
-    setActivePage('dashboard'); // Arahkan ke dashboard setelah login
-  };
-  // --- AKHIR PERUBAHAN BESAR ---
-
   const toggleSidebar = () => {
     setSidebarCollapsed(!isSidebarCollapsed);
   };
@@ -69,25 +77,21 @@ function App() {
     return <DashboardPage />;
   };
 
-  // --- LOGIKA RENDER BARU ---
-  
-  // Tampilkan loading saat sedang mengecek auth
+  // Tampilkan loading kosong saat sedang mengecek ke backend
+  // (Supaya user tidak melihat dashboard sekilas sebelum ditendang)
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-gray-500 font-semibold animate-pulse">Memeriksa akses...</p>
       </div>
     );
   }
 
-  // Jika tidak loading DAN user tidak ada (null), tampilkan LoginPage
-  if (!user) {
-    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
-  }
-  
-  // --- AKHIR LOGIKA RENDER BARU ---
+  // Jika lolos loading tapi user tetap null (seharusnya sudah di-redirect di useEffect),
+  // return null agar layar blank sebentar sebelum pindah halaman.
+  if (!user) return null;
 
-  // Jika user ada, tampilkan aplikasi utama
+  // Jika User Ada & Valid, tampilkan Dashboard
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar 
@@ -95,8 +99,8 @@ function App() {
         onToggle={toggleSidebar}
         activePage={activePage}
         setActivePage={setActivePage}
-        onLogout={handleLogout} // <-- PERUBAHAN: Kirim fungsi logout
-        user={user} // <-- PERUBAHAN: Kirim data user
+        onLogout={handleLogout} 
+        user={user} 
       />
       {renderActivePage()}
     </div>

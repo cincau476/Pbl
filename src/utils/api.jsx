@@ -46,21 +46,21 @@ async function request(endpoint, options = {}) {
     }
 }
 
-// === Stand API ===
-export const getStands = () => request('/api/stands/');
-export const addStand = (standData) => request('/api/stands/', { method: 'POST', body: standData });
-export const updateStand = (id, standData) => request(`/api/stands/${id}/`, { method: 'PUT', body: standData });
-export const deleteStand = (id) => request(`/api/stands/${id}/`, { method: 'DELETE' });
+// === Stand API (Perhatikan tambahan '/tenants') ===
+export const getStands = () => request('/api/tenants/stands/');
+export const addStand = (standData) => request('/api/tenants/stands/', { method: 'POST', body: standData });
+export const updateStand = (id, standData) => request(`/api/tenants/stands/${id}/`, { method: 'PUT', body: standData });
+export const deleteStand = (id) => request(`/api/tenants/stands/${id}/`, { method: 'DELETE' });
 
-// === Menu API ===
-export const getMenusForStand = (standId) => request(`/api/stands/${standId}/menus/`);
-export const addMenuItem = (standId, menuData) => request(`/api/stands/${standId}/menus/`, { method: 'POST', body: menuData });
-export const updateMenuItem = (standId, menuId, menuData) => request(`/api/stands/${standId}/menus/${menuId}/`, { method: 'PUT', body: menuData });
-export const deleteMenuItem = (standId, menuId) => request(`/api/stands/${standId}/menus/${menuId}/`, { method: 'DELETE' });
+// === Menu API (Perhatikan tambahan '/tenants') ===
+export const getMenusForStand = (standId) => request(`/api/tenants/stands/${standId}/menus/`);
+export const addMenuItem = (standId, menuData) => request(`/api/tenants/stands/${standId}/menus/`, { method: 'POST', body: menuData });
+export const updateMenuItem = (standId, menuId, menuData) => request(`/api/tenants/stands/${standId}/menus/${menuId}/`, { method: 'PUT', body: menuData });
+export const deleteMenuItem = (standId, menuId) => request(`/api/tenants/stands/${standId}/menus/${menuId}/`, { method: 'DELETE' });
 
 // === FUNGSI UNTUK ORDERS & REPORTS ===
 export const getReportsSummary = () => request('/api/reports/summary/');
-export const getAllOrders = () => request('/api/all/');
+export const getAllOrders = () => request('/api/orders/');
 export const confirmCashPayment = (orderUuid) => request(`/api/${orderUuid}/confirm-cash/`, { method: 'POST' });
 
 // === FUNGSI UNTUK USERS ===
@@ -71,13 +71,14 @@ export const updateUser = (userId, userData) => request(`/api/users/${userId}/`,
 export const deleteUser = (userId) => request(`/api/users/${userId}/`, { method: 'DELETE' });
 
 // --- PERUBAHAN: TAMBAHKAN EXPORT BARU UNTUK AUTENTIKASI ---
-export const login = (username, password) => request('/api/auth/login/', { 
+export const login = (username, password) => request('/api/users/login/', { 
     method: 'POST', 
     body: JSON.stringify({ username, password }) 
 });
 
-export const logout = () => request('/api/auth/logout/', { 
+export const logout = () => request('/api/users/logout/', { 
     method: 'POST' 
 });
 
-export const checkAuth = () => request('/api/auth/user/');
+// URL INI YANG PALING PENTING UNTUK PROTEKSI
+export const checkAuth = () => request('/api/users/check-auth/');
