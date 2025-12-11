@@ -1,6 +1,5 @@
 // src/components/Sidebar.jsx
 
-// --- PERUBAHAN 1: Impor 'useState' dari React dan 'FiLogOut' ---
 import React, { useState } from 'react';
 import { 
   FiGrid, FiUsers, FiShoppingCart, FiCreditCard, 
@@ -10,7 +9,6 @@ import { MdStorefront } from 'react-icons/md';
 
 import logo from '../assets/logo.png';
 
-// --- PERUBAHAN: Terima 'user' dan 'onLogout' dari props ---
 const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLogout }) => {
   
   const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -24,33 +22,34 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLog
     { id: 'reports', icon: <FiBarChart2 size={28} />, name: 'Reports' },
   ];
 
-  // --- PERUBAHAN: Gunakan fungsi onLogout dari props ---
   const handleLogoutClick = () => {
-    // Hapus konfirmasi 'window.confirm' di sini, karena sudah dipindah ke App.jsx
     onLogout();
   };
-  // --- AKHIR PERUBAHAN ---
+
+  // Helper untuk mendapatkan inisial nama (Misal: "Budi Santoso" -> "B")
+  const getInitial = (name) => {
+    return name ? name.charAt(0).toUpperCase() : 'A';
+  };
 
   return (
     <div className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${isCollapsed ? 'w-24' : 'w-72'}`}>
       
+      {/* Header Logo */}
       <div className={`p-4 flex items-center border-b h-18 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-        
         <div className={`flex items-center overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0' : 'w-full'}`}>
           <img src={logo} alt="Orderin Logo" className="h-6" />
         </div>
-
         <button onClick={onToggle} className="p-2 rounded-full hover:bg-gray-100">
           {isCollapsed ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}
         </button>
       </div>
 
+      {/* Menu Items */}
       <div className="flex-grow">
         <nav className="p-4">
           <ul className="space-y-2">
             {navItems.map((item) => {
               const isActive = activePage === item.id;
-              
               return (
                 <li key={item.id}>
                   <button 
@@ -60,14 +59,9 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLog
                       ${ isActive ? 'bg-blue-800 text-white font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}
                     `}
                   >
-                    <div className="flex-shrink-0">
-                      {item.icon}
-                    </div>
-                    
+                    <div className="flex-shrink-0">{item.icon}</div>
                     <div className={`pl-4 transition-all duration-300 ease-in-out ${isCollapsed ? 'opacity-0 -translate-x-4' : 'opacity-100 translate-x-0'}`}>
-                      <span className="whitespace-nowrap">
-                        {item.name}
-                      </span>
+                      <span className="whitespace-nowrap">{item.name}</span>
                     </div>
                   </button>
                 </li>
@@ -77,15 +71,19 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLog
         </nav>
       </div>
 
-      {/* --- PERUBAHAN 4: Modifikasi Bagian Akun --- */}
-      {/* 1. Tambahkan 'relative' untuk positioning pop-up */}
+      {/* --- BAGIAN AKUN USER (DINAMIS) --- */}
       <div className={`relative p-4 border-t ${isCollapsed ? 'flex justify-center' : ''}`}>
         
-        {/* 2. Tambahkan Pop-up Menu Logout (hanya muncul jika diklik dan sidebar tidak terlipat) */}
+        {/* Pop-up Menu Logout */}
         {isAccountMenuOpen && !isCollapsed && (
           <div className="absolute bottom-full left-4 right-4 mb-2 p-4 bg-white rounded-lg shadow-lg border z-10">
-            <p className="font-semibold text-sm text-gray-800">Admin User</p>
-            <p className="text-xs text-gray-500 mb-4">admin@orderin.app</p>
+            {/* Tampilkan Nama & Email dari props 'user' */}
+            <p className="font-semibold text-sm text-gray-800">
+              {user?.username || 'Admin User'}
+            </p>
+            <p className="text-xs text-gray-500 mb-4 truncate">
+              {user?.email || 'admin@example.com'}
+            </p>
             
             <button
               onClick={handleLogoutClick}
@@ -97,22 +95,29 @@ const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLog
           </div>
         )}
 
-        {/* 3. Ubah 'div' info akun menjadi 'button' */}
+        {/* Tombol Profil di Sidebar Bawah */}
         <button
-          onClick={() => setAccountMenuOpen(prev => !prev)} // Toggle menu
-          disabled={isCollapsed} // Nonaktifkan jika sidebar terlipat
+          onClick={() => setAccountMenuOpen(prev => !prev)}
+          disabled={isCollapsed}
           className={`flex items-center w-full overflow-hidden text-left p-2 rounded-lg ${isCollapsed ? 'justify-center' : ''} ${!isCollapsed ? 'hover:bg-gray-100' : ''} transition-colors`}
         >
+          {/* Avatar Inisial Dinamis */}
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
-            A
+            {getInitial(user?.username)}
           </div>
+          
+          {/* Teks Nama & Email Dinamis */}
           <div className={`transition-all duration-200 ease-in-out overflow-hidden ${isCollapsed ? 'w-0 ml-0' : 'w-full ml-3'}`}>
-            <p className="font-semibold text-sm text-gray-800 whitespace-nowrap">Admin User</p>
-            <p className="text-xs text-gray-500 whitespace-nowrap">admin@orderin.app</p>
+            <p className="font-semibold text-sm text-gray-800 whitespace-nowrap">
+              {user?.username || 'User'}
+            </p>
+            <p className="text-xs text-gray-500 whitespace-nowrap">
+              {user?.role || 'Admin'}
+            </p>
           </div>
         </button>
-        {/* --- AKHIR PERUBAHAN 4 --- */}
       </div>
+
     </div>
   );
 };
