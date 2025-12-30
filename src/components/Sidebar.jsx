@@ -1,125 +1,94 @@
 // src/components/Sidebar.jsx
-
-import React, { useState } from 'react';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { 
-  FiGrid, FiUsers, FiShoppingCart, FiCreditCard, 
-  FiBarChart2, FiChevronLeft, FiChevronRight, FiLogOut 
+  FiGrid, 
+  FiUsers, 
+  FiShoppingBag, 
+  FiBarChart2, 
+  FiBox, 
+  FiLogOut 
 } from 'react-icons/fi';
-import { MdStorefront } from 'react-icons/md';
 
-import logo from '../assets/logo.png';
+export default function Sidebar() {
+  const location = useLocation();
 
-const Sidebar = ({ isCollapsed, onToggle, activePage, setActivePage, user, onLogout }) => {
-  
-  const [isAccountMenuOpen, setAccountMenuOpen] = useState(false);
-
-  const navItems = [
-    { id: 'dashboard', icon: <FiGrid size={28} />, name: 'Dashboard' },
-    { id: 'accounts', icon: <FiUsers size={28} />, name: 'Accounts' },
-    { id: 'stands', icon: <MdStorefront size={28} />, name: 'Stands & Menu' },
-    { id: 'orders', icon: <FiShoppingCart size={28} />, name: 'Orders' },
-    { id: 'payments', icon: <FiCreditCard size={28} />, name: 'Payments' },
-    { id: 'reports', icon: <FiBarChart2 size={28} />, name: 'Reports' },
+  const menuItems = [
+    { name: 'Dashboard', path: '/', icon: <FiGrid /> },
+    { name: 'Tenant', path: '/stands', icon: <FiBox /> },
+    { name: 'Pesanan', path: '/orders', icon: <FiShoppingBag /> },
+    { name: 'Laporan', path: '/reports', icon: <FiBarChart2 /> },
+    { name: 'Akun', path: '/accounts', icon: <FiUsers /> },
   ];
 
-  const handleLogoutClick = () => {
-    onLogout();
-  };
+  const isActive = (path) => location.pathname === path;
 
-  // Helper untuk mendapatkan inisial nama (Misal: "Budi Santoso" -> "B")
-  const getInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'A';
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
   };
 
   return (
-    <div className={`flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${isCollapsed ? 'w-24' : 'w-72'}`}>
-      
-      {/* Header Logo */}
-      <div className={`p-4 flex items-center border-b h-18 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-        <div className={`flex items-center overflow-hidden transition-all duration-300 ${isCollapsed ? 'w-0' : 'w-full'}`}>
-          <img src={logo} alt="Orderin Logo" className="h-6" />
+    <>
+      {/* --- DESKTOP SIDEBAR (Tampil di layar > 1024px) --- */}
+      <aside className="hidden lg:flex flex-col w-64 bg-gray-900 h-screen fixed left-0 top-0 border-r border-gray-800 z-40">
+        <div className="p-8">
+          <h1 className="text-2xl font-black text-orange-500 tracking-tighter">
+            KANTINKU <span className="text-white text-xs block font-light tracking-widest mt-1">ADMIN PORTAL</span>
+          </h1>
         </div>
-        <button onClick={onToggle} className="p-2 rounded-full hover:bg-gray-100">
-          {isCollapsed ? <FiChevronRight size={20} /> : <FiChevronLeft size={20} />}
-        </button>
-      </div>
 
-      {/* Menu Items */}
-      <div className="flex-grow">
-        <nav className="p-4">
-          <ul className="space-y-2">
-            {navItems.map((item) => {
-              const isActive = activePage === item.id;
-              return (
-                <li key={item.id}>
-                  <button 
-                    onClick={() => setActivePage(item.id)}
-                    className={`
-                      w-full flex items-center p-3 rounded-lg overflow-hidden text-left transition-colors
-                      ${ isActive ? 'bg-blue-800 text-white font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'}
-                    `}
-                  >
-                    <div className="flex-shrink-0">{item.icon}</div>
-                    <div className={`pl-4 transition-all duration-300 ease-in-out ${isCollapsed ? 'opacity-0 -translate-x-4' : 'opacity-100 translate-x-0'}`}>
-                      <span className="whitespace-nowrap">{item.name}</span>
-                    </div>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        </nav>
-      </div>
-
-      {/* --- BAGIAN AKUN USER (DINAMIS) --- */}
-      <div className={`relative p-4 border-t ${isCollapsed ? 'flex justify-center' : ''}`}>
-        
-        {/* Pop-up Menu Logout */}
-        {isAccountMenuOpen && !isCollapsed && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 p-4 bg-white rounded-lg shadow-lg border z-10">
-            {/* Tampilkan Nama & Email dari props 'user' */}
-            <p className="font-semibold text-sm text-gray-800">
-              {user?.username || 'Admin User'}
-            </p>
-            <p className="text-xs text-gray-500 mb-4 truncate">
-              {user?.email || 'admin@example.com'}
-            </p>
-            
-            <button
-              onClick={handleLogoutClick}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+        <nav className="flex-1 px-4 space-y-2">
+          {menuItems.map((item) => (
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 ${
+                isActive(item.path)
+                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/40'
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+              }`}
             >
-              <FiLogOut size={16} />
-              <span>Log Out</span>
-            </button>
-          </div>
-        )}
+              <span className="text-xl">{item.icon}</span>
+              <span className="font-semibold">{item.name}</span>
+            </Link>
+          ))}
+        </nav>
 
-        {/* Tombol Profil di Sidebar Bawah */}
-        <button
-          onClick={() => setAccountMenuOpen(prev => !prev)}
-          disabled={isCollapsed}
-          className={`flex items-center w-full overflow-hidden text-left p-2 rounded-lg ${isCollapsed ? 'justify-center' : ''} ${!isCollapsed ? 'hover:bg-gray-100' : ''} transition-colors`}
-        >
-          {/* Avatar Inisial Dinamis */}
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-lg">
-            {getInitial(user?.username)}
-          </div>
-          
-          {/* Teks Nama & Email Dinamis */}
-          <div className={`transition-all duration-200 ease-in-out overflow-hidden ${isCollapsed ? 'w-0 ml-0' : 'w-full ml-3'}`}>
-            <p className="font-semibold text-sm text-gray-800 whitespace-nowrap">
-              {user?.username || 'User'}
-            </p>
-            <p className="text-xs text-gray-500 whitespace-nowrap">
-              {user?.role || 'Admin'}
-            </p>
-          </div>
-        </button>
-      </div>
+        <div className="p-4 border-t border-gray-800">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 w-full text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+          >
+            <FiLogOut className="text-xl" />
+            <span className="font-medium">Sign Out</span>
+          </button>
+        </div>
+      </aside>
 
-    </div>
+      {/* --- MOBILE & IPAD BOTTOM NAV (Tampil di iPhone 14/15 Pro & iPad) --- */}
+      {/* Menggunakan backdrop-blur agar terlihat modern di iOS */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-xl border-t border-white/5 px-2 py-1 z-[100] flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)] safe-area-pb">
+        {menuItems.map((item) => (
+          <Link
+            key={item.name}
+            to={item.path}
+            className={`flex flex-col items-center justify-center py-2 px-1 min-w-[60px] relative transition-all ${
+              isActive(item.path) ? 'text-orange-500 scale-110' : 'text-gray-500'
+            }`}
+          >
+            <span className="text-2xl mb-1">{item.icon}</span>
+            <span className="text-[9px] font-bold uppercase tracking-tighter">
+              {item.name}
+            </span>
+            
+            {/* Indikator Aktif (Glow Effect) */}
+            {isActive(item.path) && (
+              <div className="absolute -top-1 w-8 h-1 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"></div>
+            )}
+          </Link>
+        ))}
+      </nav>
+    </>
   );
-};
-
-export default Sidebar;
+}
