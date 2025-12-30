@@ -4,23 +4,34 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Fungsi helper untuk request (SUDAH DIPERBAIKI: Handle Params)
 async function request(endpoint, options = {}) {
-    let url = `${API_BASE_URL}${endpoint}`;
+    // Memastikan endpoint diawali dengan satu slash
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    let url = `${API_BASE_URL}${cleanEndpoint}`;
 
     // --- PERBAIKAN: Handle Query Params manual untuk fetch ---
-    // Fetch tidak otomatis membaca 'params', jadi kita konversi ke query string
     if (options.params) {
-        const queryString = new URLSearchParams(options.params).toString();
-        url += `?${queryString}`;
-        // Hapus params dari options agar tidak dikirim ke config fetch
+        const params = new URLSearchParams();
+        Object.entries(options.params).forEach(([key, val]) => {
+            if (val !== undefined && val !== null) params.append(key, val);
+        });
+        const queryString = params.toString();
+        if (queryString) url += `?${queryString}`;
         delete options.params;
     }
-    // ---------------------------------------------------------
+
+    // --- LOGIKA TOKEN KHUSUS ADMIN ---
+    // Menggunakan key 'admin_token' agar tidak tertimpa oleh login Tenant
+    const token = localStorage.getItem('admin_token'); 
 
     const headers = {
         ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers,
     };
 
+    // Menyisipkan token ke header Authorization jika tersedia
+    if (token) {
+        headers['Authorization'] = `Token ${token}`;
+    }
     const config = {
         ...options,
         headers,
