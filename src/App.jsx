@@ -13,7 +13,7 @@ import ReportsPage from './pages/ReportsPage.jsx';
 import * as api from './utils/api.jsx';
 
 // Ganti URL ini sesuai alamat frontend customer kamu
-const CUSTOMER_LOGIN_URL = 'https://www.kantinku.com/login';
+const CUSTOMER_LOGIN_URL = window.location.origin + '/login';
 
 function App() {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
