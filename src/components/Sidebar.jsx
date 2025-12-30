@@ -1,4 +1,3 @@
-// src/components/Sidebar.jsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -7,10 +6,10 @@ import {
   FiShoppingBag, 
   FiBarChart2, 
   FiBox, 
-  FiLogOut 
+  FiLogOut,
+  FiCreditCard // Ikon baru untuk pembayaran
 } from 'react-icons/fi';
 
-// Terima props onLogout dari App.jsx
 export default function Sidebar({ onLogout }) { 
   const location = useLocation();
 
@@ -18,6 +17,7 @@ export default function Sidebar({ onLogout }) {
     { name: 'Dashboard', path: '/', icon: <FiGrid /> },
     { name: 'Tenant', path: '/stands', icon: <FiBox /> },
     { name: 'Pesanan', path: '/orders', icon: <FiShoppingBag /> },
+    { name: 'Bayar', path: '/payments', icon: <FiCreditCard /> }, // Menambahkan menu pembayaran
     { name: 'Laporan', path: '/reports', icon: <FiBarChart2 /> },
     { name: 'Akun', path: '/accounts', icon: <FiUsers /> },
   ];
@@ -34,7 +34,8 @@ export default function Sidebar({ onLogout }) {
           </h1>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2">
+        {/* Navigasi Utama dengan scroll jika menu banyak */}
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
             <Link
               key={item.name}
@@ -52,7 +53,6 @@ export default function Sidebar({ onLogout }) {
         </nav>
 
         <div className="p-4 border-t border-gray-800">
-          {/* Gunakan fungsi onLogout dari props agar sinkron dengan backend */}
           <button 
             onClick={onLogout} 
             className="flex items-center gap-3 px-4 py-3 w-full text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
@@ -63,20 +63,20 @@ export default function Sidebar({ onLogout }) {
         </div>
       </aside>
 
-      {/* --- MOBILE NAV (Tetap menggunakan Link) --- */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-xl border-t border-white/5 px-2 py-1 z-[100] flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)] safe-area-pb">
+      {/* --- MOBILE NAV --- */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl border-t border-white/5 px-2 py-1 z-[100] flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)] safe-area-pb">
         {menuItems.map((item) => (
           <Link
             key={item.name}
             to={item.path}
-            className={`flex flex-col items-center justify-center py-2 px-1 min-w-[60px] relative transition-all ${
+            className={`flex flex-col items-center justify-center py-2 px-1 min-w-[50px] relative transition-all ${
               isActive(item.path) ? 'text-orange-500 scale-110' : 'text-gray-500'
             }`}
           >
-            <span className="text-2xl mb-1">{item.icon}</span>
-            <span className="text-[9px] font-bold uppercase tracking-tighter">{item.name}</span>
+            <span className="text-xl mb-1">{item.icon}</span>
+            <span className="text-[8px] font-bold uppercase tracking-tighter">{item.name}</span>
             {isActive(item.path) && (
-              <div className="absolute -top-1 w-8 h-1 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"></div>
+              <div className="absolute -top-1 w-6 h-1 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"></div>
             )}
           </Link>
         ))}
