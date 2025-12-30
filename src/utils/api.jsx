@@ -94,4 +94,4 @@ export const logout = () => request('/api/users/logout/', {
     method: 'POST' 
 });
 
-export const checkAuth = () => request('/api/users/check-auth/'); // Pastikan endpoint ini benar di backend (biasanya check-auth atau user info)
+export const checkAuth = () => request('/users/check-auth/'); // Pastikan endpoint ini benar di backend (biasanya check-auth atau user info)
