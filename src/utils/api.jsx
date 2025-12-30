@@ -1,6 +1,6 @@
 // src/utils/api.jsx
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Fungsi helper untuk request (SUDAH DIPERBAIKI: Handle Params)
 async function request(endpoint, options = {}) {
