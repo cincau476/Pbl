@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react'; 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar.jsx';
@@ -15,6 +14,7 @@ const CUSTOMER_LOGIN_URL = 'https://www.kantinku.com/login';
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true); // State untuk toggle sidebar
 
   useEffect(() => {
     const verifyUser = async () => {
@@ -48,18 +48,22 @@ function App() {
     </div>
   );
 
-  if (!user) return null;
-
   return (
     <Router basename="/admin">
       <div className="flex min-h-screen bg-gray-900 text-gray-100">
-        {/* Sidebar dipanggil sekali di sini */}
-        <Sidebar onLogout={handleLogout} />
+        {/* Sidebar menerima props kontrol expand */}
+        <Sidebar 
+          onLogout={handleLogout} 
+          isExpanded={isSidebarExpanded} 
+          setIsExpanded={setIsSidebarExpanded} 
+        />
         
-        {/* Kontainer Konten Utama */}
-        <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+        {/* Konten Utama dengan padding dinamis sesuai lebar sidebar */}
+        <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          isSidebarExpanded ? 'lg:pl-64' : 'lg:pl-20'
+        }`}>
           <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="max-w-7xl mx-auto">
               <Routes>
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/accounts" element={<AccountsPage />} />
