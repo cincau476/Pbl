@@ -56,19 +56,23 @@ function App() {
 
   return (
     <Router basename="/admin">
-      <div className="flex h-screen bg-gray-50">
-        {/* Sidebar menerima fungsi logout pusat */}
+      {/* Container utama menggunakan min-h-screen agar background konsisten */}
+      <div className="flex min-h-screen bg-gray-50">
         <Sidebar onLogout={handleLogout} user={user} />
         
-        <div className="flex-1 overflow-auto">
-          <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/accounts" element={<AccountsPage />} />
-            <Route path="/stands" element={<StandsAndMenuPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/payments" element={<PaymentsPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-          </Routes>
+        {/* Tambahkan lg:pl-64 untuk memberi ruang sidebar desktop */}
+        <div className="flex-1 lg:pl-64 w-full">
+          {/* Padding bawah pb-24 agar konten tidak tertutup navigasi mobile */}
+          <main className="p-4 md:p-8 pb-24 lg:pb-8">
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/accounts" element={<AccountsPage />} />
+              <Route path="/stands" element={<StandsAndMenuPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/payments" element={<PaymentsPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+            </Routes>
+          </main>
         </div>
       </div>
     </Router>
