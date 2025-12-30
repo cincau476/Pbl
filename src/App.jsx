@@ -1,7 +1,5 @@
-// src/App.jsx
-
 import React, { useState, useEffect } from 'react'; 
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import AccountsPage from './pages/AccountsPage.jsx';
@@ -11,12 +9,9 @@ import PaymentsPage from './pages/PaymentsPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
 import * as api from './utils/api.jsx';
 
-// URL Produksi untuk redirect jika tidak login
 const CUSTOMER_LOGIN_URL = 'https://www.kantinku.com/login';
 
 function App() {
-  const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activePage, setActivePage] = useState('dashboard');
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,17 +43,6 @@ function App() {
         }
     }
   };
-  
-  const toggleSidebar = () => setSidebarCollapsed(!isSidebarCollapsed);
-
-  const renderActivePage = () => {
-    if (activePage === 'accounts') return <AccountsPage />;
-    if (activePage === 'stands') return <StandsAndMenuPage />;
-    if (activePage === 'orders') return <OrdersPage />;
-    if (activePage === 'payments') return <PaymentsPage />;
-    if (activePage === 'reports') return <ReportsPage />;
-    return <DashboardPage />;
-  };
 
   if (isLoading) {
     return (
@@ -73,16 +57,18 @@ function App() {
   return (
     <Router basename="/admin">
       <div className="flex h-screen bg-gray-50">
-        <Sidebar 
-          isCollapsed={isSidebarCollapsed} 
-          onToggle={toggleSidebar}
-          activePage={activePage}
-          setActivePage={setActivePage}
-          onLogout={handleLogout} 
-          user={user} 
-        />
+        {/* Sidebar menerima fungsi logout pusat */}
+        <Sidebar onLogout={handleLogout} user={user} />
+        
         <div className="flex-1 overflow-auto">
-          {renderActivePage()}
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/accounts" element={<AccountsPage />} />
+            <Route path="/stands" element={<StandsAndMenuPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/payments" element={<PaymentsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+          </Routes>
         </div>
       </div>
     </Router>
