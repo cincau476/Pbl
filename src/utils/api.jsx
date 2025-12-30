@@ -2,13 +2,11 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
-// Fungsi helper untuk request (SUDAH DIPERBAIKI: Handle Params)
 async function request(endpoint, options = {}) {
-    // Memastikan endpoint diawali dengan satu slash
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     let url = `${API_BASE_URL}${cleanEndpoint}`;
 
-    // --- PERBAIKAN: Handle Query Params manual untuk fetch ---
+    // Handle Query Params
     if (options.params) {
         const params = new URLSearchParams();
         Object.entries(options.params).forEach(([key, val]) => {
@@ -19,8 +17,7 @@ async function request(endpoint, options = {}) {
         delete options.params;
     }
 
-    // --- LOGIKA TOKEN KHUSUS ADMIN ---
-    // Menggunakan key 'admin_token' agar tidak tertimpa oleh login Tenant
+    // MENGGUNAKAN admin_token AGAR TIDAK BENTROK DENGAN TENANT
     const token = localStorage.getItem('admin_token'); 
 
     const headers = {
@@ -28,35 +25,25 @@ async function request(endpoint, options = {}) {
         ...options.headers,
     };
 
-    // Menyisipkan token ke header Authorization jika tersedia
     if (token) {
         headers['Authorization'] = `Token ${token}`;
     }
+
     const config = {
         ...options,
         headers,
-        credentials: 'include', // Penting untuk cookie session
+        credentials: 'include',
     };
 
     try {
         const response = await fetch(url, config);
-        
         if (!response.ok) {
             let errorData;
-            try {
-                errorData = await response.json();
-            } catch (jsonError) {
-                throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
-            }
-            const errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
-            throw new Error(errorMessage);
+            try { errorData = await response.json(); } 
+            catch { throw new Error(`HTTP Error ${response.status}`); }
+            throw new Error(errorData.detail || errorData.message || 'API Error');
         }
-        
-        if (response.status === 204) {
-            return null;
-        }
-        
-        return response.json();
+        return response.status === 204 ? null : response.json();
     } catch (error) {
         console.error('API Error:', error);
         throw error;
