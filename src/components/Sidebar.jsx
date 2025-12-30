@@ -21,13 +21,12 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
 
   return (
     <>
-      {/* DESKTOP SIDEBAR */}
       <aside className={`hidden lg:flex flex-col bg-gray-900 h-screen fixed left-0 top-0 border-r border-gray-800 z-50 transition-all duration-300 ${
         isExpanded ? 'w-64' : 'w-20'
       }`}>
         <div className="p-6 flex items-center justify-between">
           {isExpanded && (
-            <h1 className="text-xl font-black text-orange-500 tracking-tighter uppercase animate-in fade-in duration-300">
+            <h1 className="text-xl font-black text-orange-500 tracking-tighter uppercase">
               Kantinku
             </h1>
           )}
@@ -46,17 +45,13 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
               to={item.path}
               className={`flex items-center gap-4 p-3.5 rounded-xl transition-all duration-200 ${
                 isActive(item.path)
-                  ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/40'
+                  ? 'bg-orange-600 text-white shadow-lg'
                   : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               } ${!isExpanded ? 'justify-center' : ''}`}
               title={!isExpanded ? item.name : ''}
             >
               <span className="text-xl">{item.icon}</span>
-              {isExpanded && (
-                <span className="font-semibold whitespace-nowrap animate-in slide-in-from-left-2 duration-300">
-                  {item.name}
-                </span>
-              )}
+              {isExpanded && <span className="font-semibold whitespace-nowrap">{item.name}</span>}
             </Link>
           ))}
         </nav>
@@ -74,7 +69,6 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
         </div>
       </aside>
 
-      {/* MOBILE NAV (Bottom Bar) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 px-2 py-1 z-[100] flex justify-around items-center safe-area-pb">
         {menuItems.slice(0, 5).map((item) => (
           <Link key={item.name} to={item.path} className={`flex flex-col items-center py-2 ${isActive(item.path) ? 'text-orange-500' : 'text-gray-500'}`}>
