@@ -53,44 +53,44 @@ async function request(endpoint, options = {}) {
 }
 
 // === Stand API ===
-export const getStands = () => request('/api/tenants/stands/');
-export const addStand = (standData) => request('/api/tenants/stands/', { method: 'POST', body: standData });
-export const updateStand = (id, standData) => request(`/api/tenants/stands/${id}/`, { method: 'PUT', body: standData });
-export const deleteStand = (id) => request(`/api/tenants/stands/${id}/`, { method: 'DELETE' });
+export const getStands = () => request('/tenants/stands/');
+export const addStand = (standData) => request('/tenants/stands/', { method: 'POST', body: standData });
+export const updateStand = (id, standData) => request(`/tenants/stands/${id}/`, { method: 'PUT', body: standData });
+export const deleteStand = (id) => request(`/tenants/stands/${id}/`, { method: 'DELETE' });
 
 // === Menu API ===
-export const getMenusForStand = (standId) => request(`/api/tenants/stands/${standId}/menus/`);
-export const addMenuItem = (standId, menuData) => request(`/api/tenants/stands/${standId}/menus/`, { method: 'POST', body: menuData });
-export const updateMenuItem = (standId, menuId, menuData) => request(`/api/tenants/stands/${standId}/menus/${menuId}/`, { method: 'PUT', body: menuData });
-export const deleteMenuItem = (standId, menuId) => request(`/api/tenants/stands/${standId}/menus/${menuId}/`, { method: 'DELETE' });
+export const getMenusForStand = (standId) => request(`/tenants/stands/${standId}/menus/`);
+export const addMenuItem = (standId, menuData) => request(`/tenants/stands/${standId}/menus/`, { method: 'POST', body: menuData });
+export const updateMenuItem = (standId, menuId, menuData) => request(`/tenants/stands/${standId}/menus/${menuId}/`, { method: 'PUT', body: menuData });
+export const deleteMenuItem = (standId, menuId) => request(`/tenants/stands/${standId}/menus/${menuId}/`, { method: 'DELETE' });
 
 // === FUNGSI UNTUK ORDERS & REPORTS ===
-export const getReportsSummary = () => request('/api/orders/reports/summary/'); // Pastikan URL ini sesuai backend
+export const getReportsSummary = () => request('/orders/reports/summary/'); // Pastikan URL ini sesuai backend
 
 // PERBAIKAN PENTING DI SINI:
 // 1. Tambahkan '/api' di depan
 // 2. 'params' sekarang akan diproses oleh fungsi request di atas
 export const getAllOrders = (params) => {
-  return request('/api/orders/all/', { params }); 
+  return request('/orders/all/', { params }); 
 };
 
 // PERBAIKAN URL: Tambahkan '/orders' di tengah
-export const confirmCashPayment = (orderUuid) => request(`/api/orders/${orderUuid}/confirm-cash/`, { method: 'POST' });
+export const confirmCashPayment = (orderUuid) => request(`/orders/${orderUuid}/confirm-cash/`, { method: 'POST' });
 
 // === FUNGSI UNTUK USERS ===
-export const getUsers = () => request('/api/users/');
-export const getUsersSummary = () => request('/api/users/summary/');
-export const addUser = (userData) => request('/api/users/', { method: 'POST', body: JSON.stringify(userData) });
-export const updateUser = (userId, userData) => request(`/api/users/${userId}/`, { method: 'PATCH', body: JSON.stringify(userData) });
-export const deleteUser = (userId) => request(`/api/users/${userId}/`, { method: 'DELETE' });
+export const getUsers = () => request('/users/');
+export const getUsersSummary = () => request('/users/summary/');
+export const addUser = (userData) => request('/users/', { method: 'POST', body: JSON.stringify(userData) });
+export const updateUser = (userId, userData) => request(`/users/${userId}/`, { method: 'PATCH', body: JSON.stringify(userData) });
+export const deleteUser = (userId) => request(`/users/${userId}/`, { method: 'DELETE' });
 
 // === AUTH ===
-export const login = (username, password) => request('/api/users/login/', { 
+export const login = (username, password) => request('/users/login/', { 
     method: 'POST', 
     body: JSON.stringify({ username, password }) 
 });
 
-export const logout = () => request('/api/users/logout/', { 
+export const logout = () => request('/users/logout/', { 
     method: 'POST' 
 });
 
