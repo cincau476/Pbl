@@ -1,4 +1,3 @@
-// src/pages/DashboardPage.jsx
 import React, { useState, useEffect } from 'react';
 import { FiHome, FiTrendingUp, FiCheckCircle, FiUsers, FiLoader } from 'react-icons/fi';
 import StatCard from '../components/StatCard.jsx';
@@ -21,7 +20,6 @@ const DashboardPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
         const [summaryData, ordersData] = await Promise.all([
           getReportsSummary(),
           getAllOrders()
@@ -49,20 +47,12 @@ const DashboardPage = () => {
     </div>
   );
 
-  const totalSalesToday = summary?.stand_performance?.reduce((acc, stand) => acc + (stand.revenue || 0), 0) || 0;
-  const totalStandsToday = summary?.stand_performance?.length || 0;
-  const activeOrders = summary?.stats_today?.preparing || 0;
-  const pendingOrders = summary?.stats_today?.pending || 0;
-  const activeCustomers = summary?.main_stats?.active_customers || 0;
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">DASHBOARD</h1>
-          <p className="text-gray-400">Ringkasan aktivitas kantin hari ini.</p>
-        </div>
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-black text-white tracking-tight uppercase">Dashboard</h1>
+        <p className="text-gray-400">Selamat datang kembali di portal manajemen.</p>
       </div>
 
       {/* Stats Grid */}
@@ -70,33 +60,32 @@ const DashboardPage = () => {
         <StatCard
           icon={<FiHome className="text-orange-500" />}
           title="Stands Aktif"
-          value={totalStandsToday}
+          value={summary?.stand_performance?.length || 0}
         />
         <StatCard
           icon={<FiTrendingUp className="text-green-500" />}
           title="Omzet Hari Ini"
-          value={formatCurrency(totalSalesToday)}
-          change={`${activeOrders} sedang diproses`}
+          value={formatCurrency(summary?.stand_performance?.reduce((acc, s) => acc + (s.revenue || 0), 0) || 0)}
+          change="Data real-time"
           changeColor="text-green-500"
         />
         <StatCard
           icon={<FiCheckCircle className="text-blue-500" />}
-          title="Menunggu Bayar"
-          value={pendingOrders}
-          change="Awaiting payment"
+          title="Pesanan Aktif"
+          value={summary?.stats_today?.preparing || 0}
         />
         <StatCard
           icon={<FiUsers className="text-purple-500" />}
-          title="Pelanggan (7hr)"
-          value={activeCustomers}
+          title="Pelanggan"
+          value={summary?.main_stats?.active_customers || 0}
         />
       </div>
 
       {/* Main Panels */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
-          <div className="p-6 border-b border-gray-700">
-            <h3 className="font-bold text-white uppercase tracking-wider text-sm">Pesanan Terbaru</h3>
+          <div className="p-6 border-b border-gray-700 bg-gray-800/30">
+            <h3 className="font-bold text-white uppercase text-sm">Pesanan Terbaru</h3>
           </div>
           <div className="overflow-x-auto">
             <RecentOrders orders={orders} />
@@ -104,7 +93,7 @@ const DashboardPage = () => {
         </div>
 
         <div className="bg-gray-800/50 rounded-2xl border border-gray-700 p-6 shadow-xl">
-          <h3 className="font-bold text-white uppercase tracking-wider text-sm mb-6">Performa Tenant</h3>
+          <h3 className="font-bold text-white uppercase text-sm mb-6">Top Stands</h3>
           <TopStands stands={summary?.stand_performance} />
         </div>
       </div>
