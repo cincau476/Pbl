@@ -25,7 +25,6 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
       <aside className={`hidden lg:flex flex-col bg-gray-900 h-screen fixed left-0 top-0 border-r border-gray-800 z-50 transition-all duration-300 ${
         isExpanded ? 'w-64' : 'w-20'
       }`}>
-        {/* Header dengan Tombol Toggle */}
         <div className="p-6 flex items-center justify-between">
           {isExpanded && (
             <h1 className="text-xl font-black text-orange-500 tracking-tighter uppercase animate-in fade-in duration-300">
@@ -35,13 +34,11 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
           <button 
             onClick={() => setIsExpanded(!isExpanded)}
             className="p-2 rounded-lg bg-gray-800 text-orange-500 hover:bg-gray-700 transition-colors mx-auto"
-            title={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
           >
             {isExpanded ? <FiChevronLeft size={20} /> : <FiMenu size={20} />}
           </button>
         </div>
 
-        {/* Navigasi Menu */}
         <nav className="flex-1 px-3 space-y-2 overflow-y-auto">
           {menuItems.map((item) => (
             <Link
@@ -64,7 +61,6 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
           ))}
         </nav>
 
-        {/* Footer Logout */}
         <div className="p-4 border-t border-gray-800">
           <button 
             onClick={onLogout} 
@@ -80,7 +76,7 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
 
       {/* MOBILE NAV (Bottom Bar) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 px-2 py-1 z-[100] flex justify-around items-center safe-area-pb">
-        {menuItems.slice(0, 5).map((item) => ( // Batasi jumlah menu di mobile agar tidak sesak
+        {menuItems.slice(0, 5).map((item) => (
           <Link key={item.name} to={item.path} className={`flex flex-col items-center py-2 ${isActive(item.path) ? 'text-orange-500' : 'text-gray-500'}`}>
             <span className="text-xl">{item.icon}</span>
             <span className="text-[10px] uppercase font-bold">{item.name}</span>
