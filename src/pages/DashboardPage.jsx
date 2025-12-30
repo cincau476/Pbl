@@ -37,63 +37,41 @@ const DashboardPage = () => {
 
   if (loading) return (
     <div className="flex h-[60vh] items-center justify-center">
-      <FiLoader className="w-10 h-10 text-orange-500 animate-spin" />
+      <FiLoader className="w-10 h-10 text-blue-500 animate-spin" />
     </div>
   );
   
   if (error) return (
-    <div className="bg-red-500/10 border border-red-500 p-4 rounded-xl text-red-500 text-center">
+    <div className="bg-red-50 border border-red-200 p-4 rounded-xl text-red-600 text-center">
       Error: {error}
     </div>
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header */}
       <div>
-        <h1 className="text-3xl font-black text-white tracking-tight uppercase">Dashboard</h1>
-        <p className="text-gray-400">Selamat datang kembali di portal manajemen.</p>
+        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <p className="text-gray-500">Selamat datang kembali di portal manajemen.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          icon={<FiHome className="text-orange-500" />}
-          title="Stands Aktif"
-          value={summary?.stand_performance?.length || 0}
-        />
-        <StatCard
-          icon={<FiTrendingUp className="text-green-500" />}
-          title="Omzet Hari Ini"
-          value={formatCurrency(summary?.stand_performance?.reduce((acc, s) => acc + (s.revenue || 0), 0) || 0)}
-          change="Data real-time"
-          changeColor="text-green-500"
-        />
-        <StatCard
-          icon={<FiCheckCircle className="text-blue-500" />}
-          title="Pesanan Aktif"
-          value={summary?.stats_today?.preparing || 0}
-        />
-        <StatCard
-          icon={<FiUsers className="text-purple-500" />}
-          title="Pelanggan"
-          value={summary?.main_stats?.active_customers || 0}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard icon={<FiHome className="text-blue-500" />} title="Stands Hari Ini" value={summary?.stand_performance?.length || 0} />
+        <StatCard icon={<FiTrendingUp className="text-green-500" />} title="Omzet" value={formatCurrency(summary?.stand_performance?.reduce((acc, s) => acc + (s.revenue || 0), 0) || 0)} />
+        <StatCard icon={<FiCheckCircle className="text-orange-500" />} title="Pesanan Aktif" value={summary?.stats_today?.preparing || 0} />
+        <StatCard icon={<FiUsers className="text-purple-500" />} title="Pelanggan" value={summary?.main_stats?.active_customers || 0} />
       </div>
 
-      {/* Main Panels */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 bg-gray-800/50 rounded-2xl border border-gray-700 overflow-hidden shadow-xl">
-          <div className="p-6 border-b border-gray-700 bg-gray-800/30">
-            <h3 className="font-bold text-white uppercase text-sm">Pesanan Terbaru</h3>
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/50">
+            <h3 className="font-bold text-gray-800 uppercase text-sm">Pesanan Terbaru</h3>
           </div>
           <div className="overflow-x-auto">
             <RecentOrders orders={orders} />
           </div>
         </div>
-
-        <div className="bg-gray-800/50 rounded-2xl border border-gray-700 p-6 shadow-xl">
-          <h3 className="font-bold text-white uppercase text-sm mb-6">Top Stands</h3>
+        <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="font-bold text-gray-800 uppercase text-sm mb-6">Top Stands</h3>
           <TopStands stands={summary?.stand_performance} />
         </div>
       </div>
