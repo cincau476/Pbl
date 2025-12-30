@@ -14,7 +14,7 @@ const CUSTOMER_LOGIN_URL = 'https://www.kantinku.com/login';
 function App() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true); // State untuk toggle sidebar
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true); // State kontrol lebar sidebar
 
   useEffect(() => {
     const verifyUser = async () => {
@@ -51,14 +51,14 @@ function App() {
   return (
     <Router basename="/admin">
       <div className="flex min-h-screen bg-gray-900 text-gray-100">
-        {/* Sidebar menerima props kontrol expand */}
+        {/* Sidebar Global */}
         <Sidebar 
           onLogout={handleLogout} 
           isExpanded={isSidebarExpanded} 
           setIsExpanded={setIsSidebarExpanded} 
         />
         
-        {/* Konten Utama dengan padding dinamis sesuai lebar sidebar */}
+        {/* Kontainer Konten dengan padding kiri dinamis */}
         <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
           isSidebarExpanded ? 'lg:pl-64' : 'lg:pl-20'
         }`}>
