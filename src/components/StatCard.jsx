@@ -1,26 +1,30 @@
 // src/components/StatCard.jsx
-
 import React from 'react';
 
-// --- PERUBAHAN ---
-// Prop 'change' sekarang opsional
-const StatCard = ({ icon, title, value, change, changeColor = 'text-gray-500' }) => {
+const StatCard = ({ icon, title, value, change, changeColor, iconBg }) => {
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col">
-          <span className="text-sm text-gray-500">{title}</span>
-          <span className="text-2xl font-bold text-gray-800 mt-1">{value}</span>
+    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
+          <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
         </div>
-        <div className="text-2xl bg-gray-100 p-2 rounded-lg">
+        {/* PENTING: Di sini kita menggunakan prop 'iconBg' 
+           untuk memberi warna latar belakang pada lingkaran ikon.
+        */}
+        <div className={`p-3 rounded-full flex items-center justify-center shadow-sm ${iconBg || 'bg-gray-100'}`}>
           {icon}
         </div>
       </div>
-      {/* Tampilkan baris ini hanya jika 'change' ada isinya */}
+      
       {change && (
-        <p className={`text-xs mt-2 ${changeColor}`}>{change}</p>
+        <div className="mt-4 flex items-center text-xs">
+          <span className={`font-medium ${changeColor || 'text-gray-500'}`}>
+            {change}
+          </span>
+          <span className="text-gray-400 ml-2">vs last period</span>
+        </div>
       )}
-      {/* --- AKHIR PERUBAHAN --- */}
     </div>
   );
 };
