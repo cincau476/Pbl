@@ -1,13 +1,11 @@
 // src/pages/AccountsPage.jsx
-// (Ganti seluruh file dengan ini)
 
 import React, { useState, useEffect } from 'react';
-// --- PERUBAHAN 1: Hapus 'axios' dan impor 'api' ---
 import * as api from '../utils/api.jsx'; 
+// 1. IMPORT UserTable dari komponen luar
+import UserTable from '../components/UserTable.jsx'; 
 
-// ====================================================================
-// === PENGGANTI REACT-ICONS (SVG INLINE) ===
-// ====================================================================
+// Ikon-ikon header tetap di sini (atau bisa dipindah ke file terpisah jika mau)
 const FiSearch = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 );
@@ -20,17 +18,11 @@ const FiBell = (props) => (
 const FiUser = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
 );
-const FiEdit = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-);
-const FiTrash2 = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-);
 
-// ====================================================================
-// === DEFINISI KOMPONEN-KOMPONEN YANG DIBUTUHKAN ===
-// ====================================================================
+// --- NOTE: Hapus RoleBadge lokal ---
+// --- NOTE: Hapus definisi UserTable lokal (yang lama) ---
 
+// Komponen Modal tetap di sini (karena tidak ada di UserTable.jsx)
 const UserFormModal = ({ onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({
     username: initialData?.username || '',
@@ -55,7 +47,7 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md animate-in fade-in zoom-in duration-200">
         <h2 className="text-xl font-bold mb-4 text-gray-800">{initialData ? 'Edit User' : 'Add New User'}</h2>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
@@ -78,74 +70,15 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
   );
 };
 
-const RoleBadge = ({ role }) => {
-  const roleColors = {
-    Admin: 'bg-blue-100 text-blue-700',
-    Seller: 'bg-orange-100 text-orange-700',
-    Cashier: 'bg-green-100 text-green-700',
-  };
-  return (
-    <span className={`px-3 py-1 text-xs font-medium rounded-full ${roleColors[role] || 'bg-gray-100 text-gray-700'}`}>
-      {role}
-    </span>
-  );
-};
-
-const UserTable = ({ users, onDelete, onEdit }) => {
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
-          <thead className="text-xs text-gray-500 uppercase bg-gray-50">
-            <tr>
-              <th scope="col" className="px-6 py-3">Name</th>
-              <th scope="col" className="px-6 py-3">Role</th>
-              <th scope="col" className="px-6 py-3">Email</th>
-              <th scope="col" className="px-6 py-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="bg-white border-b hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                  {user.username}
-                </td>
-                <td className="px-6 py-4">
-                  <RoleBadge role={user.role} />
-                </td>
-                <td className="px-6 py-4">{user.email}</td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-center gap-4">
-                    <button onClick={() => onEdit(user)} className="flex items-center gap-1 text-blue-600 hover:underline">
-                      <FiEdit size={16}/> Edit
-                    </button>
-                    <button onClick={() => onDelete(user.id)} className="flex items-center gap-1 text-red-600 hover:underline">
-                      <FiTrash2 size={16}/> Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
-
 const SummaryCard = ({ title, count, description, borderColor }) => {
   return (
     <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderColor}`}>
-      <h3 className="text-gray-500">{title}</h3>
+      <h3 className="text-gray-500 font-medium">{title}</h3>
       <p className="text-3xl font-bold text-gray-800 my-1">{count}</p>
       <p className="text-xs text-gray-400">{description}</p>
     </div>
   );
 };
-
-// ====================================================================
-// === KOMPONEN UTAMA HALAMAN AKUN ===
-// ====================================================================
 
 const AccountsPage = () => {
   const [users, setUsers] = useState([]);
@@ -156,21 +89,20 @@ const AccountsPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // --- PERUBAHAN 2: Gunakan 'api' untuk fetchData ---
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
         const [usersResponse, summaryResponse] = await Promise.all([
-          api.getUsers(),       // <-- Diubah
-          api.getUsersSummary() // <-- Diubah
+          api.getUsers(),       
+          api.getUsersSummary() 
         ]);
         setUsers(usersResponse);
         setSummary(summaryResponse);
       } catch (err) {
         console.error("Gagal mengambil data akun:", err);
-        setError(`Tidak dapat memuat data: ${err.message}`); // Tampilkan pesan error
+        setError(`Tidak dapat memuat data: ${err.message}`); 
       } finally {
         setLoading(false);
       }
@@ -178,11 +110,10 @@ const AccountsPage = () => {
     fetchData();
   }, []);
 
-  // --- PERUBAHAN 3: Gunakan 'api' untuk handleDeleteUser ---
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await api.deleteUser(userId); // <-- Diubah
+        await api.deleteUser(userId); 
         setUsers(users.filter(user => user.id !== userId));
       } catch (err) {
         console.error("Gagal menghapus pengguna:", err);
@@ -191,12 +122,11 @@ const AccountsPage = () => {
     }
   };
   
-  // --- PERUBAHAN 4: Gunakan 'api' untuk handleSaveUser ---
   const handleSaveUser = async (formData) => {
     if (editingUser) {
       // MODE EDIT
       try {
-        const response = await api.updateUser(editingUser.id, formData); // <-- Diubah
+        const response = await api.updateUser(editingUser.id, formData); 
         setUsers(users.map(user => user.id === editingUser.id ? response : user));
         setIsModalOpen(false);
         setEditingUser(null);
@@ -207,7 +137,7 @@ const AccountsPage = () => {
     } else {
       // MODE BUAT BARU
       try {
-        const response = await api.addUser(formData); // <-- Diubah
+        const response = await api.addUser(formData); 
         setUsers([...users, response]);
         setIsModalOpen(false);
       } catch (err) {
@@ -229,7 +159,7 @@ const AccountsPage = () => {
   
   const filteredUsers = users.filter(user => 
     user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) // <-- Dibuat lebih aman
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   if (loading) {
@@ -238,63 +168,55 @@ const AccountsPage = () => {
         <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
         </header>
-        <main className="flex-1 flex items-center justify-center">
-            <p className="text-gray-500">Loading data...</p>
+        <main className="flex-1 flex items-center justify-center bg-gray-50">
+            <p className="text-gray-500 animate-pulse font-medium">Loading data...</p>
         </main>
       </div>
     );
   }
 
-  if (error) {
-    return (
-        <div className="flex-1 flex flex-col h-screen">
-            <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
-                <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
-            </header>
-            <main className="flex-1 flex items-center justify-center">
-                <p className="text-red-500">{error}</p>
-            </main>
-        </div>
-    );
-  }
-
   return (
     <div className="flex-1 flex flex-col h-screen">
+      {/* Header Halaman */}
       <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
         <div className="flex items-center gap-4">
-          <button className="relative text-gray-600 hover:text-gray-800">
+          <button className="relative text-gray-600 hover:text-gray-800 transition-colors">
             <FiBell size={22} />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
-          <button className="text-gray-600 hover:text-gray-800">
-            <FiUser size={22} />
-          </button>
+          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+            <FiUser size={18} />
+          </div>
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div className="relative w-1/3">
+        
+        {/* Search & Add Button */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <div className="relative w-full md:w-1/3">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3">
               <FiSearch className="text-gray-400" />
             </span>
             <input 
               type="text" 
               placeholder="Search users by name or email..." 
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600 transition-colors">
+            className="w-full md:w-auto bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-orange-600 transition-all shadow-sm hover:shadow-md">
             <FiPlus size={20} />
             Add New User
           </button>
         </div>
         
+        {/* Modal Form */}
         {isModalOpen && (
           <UserFormModal
             onClose={() => setIsModalOpen(false)}
@@ -303,27 +225,29 @@ const AccountsPage = () => {
           />
         )}  
 
+        {/* Tabel User (Menggunakan Komponen Impor) */}
         <UserTable users={filteredUsers} onDelete={handleDeleteUser} onEdit={handleOpenEditModal} />
 
+        {/* Kartu Ringkasan (Summary) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {summary && (
             <>
               <SummaryCard 
                 title="Admins" 
                 count={summary.admins.count} 
-                description={summary.admins.description}
+                description={summary.admins.description || "System Administrators"}
                 borderColor="border-blue-500" 
               />
               <SummaryCard 
                 title="Sellers" 
                 count={summary.sellers.count} 
-                description={summary.sellers.description}
+                description={summary.sellers.description || "Food Tenant Owners"}
                 borderColor="border-orange-500" 
               />
               <SummaryCard 
                 title="Cashiers" 
                 count={summary.cashiers.count} 
-                description={summary.cashiers.description}
+                description={summary.cashiers.description || "Payment Processors"}
                 borderColor="border-green-500" 
               />
             </>
