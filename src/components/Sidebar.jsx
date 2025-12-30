@@ -10,7 +10,8 @@ import {
   FiLogOut 
 } from 'react-icons/fi';
 
-export default function Sidebar() {
+// Terima props onLogout dari App.jsx
+export default function Sidebar({ onLogout }) { 
   const location = useLocation();
 
   const menuItems = [
@@ -23,14 +24,9 @@ export default function Sidebar() {
 
   const isActive = (path) => location.pathname === path;
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-  };
-
   return (
     <>
-      {/* --- DESKTOP SIDEBAR (Tampil di layar > 1024px) --- */}
+      {/* --- DESKTOP SIDEBAR --- */}
       <aside className="hidden lg:flex flex-col w-64 bg-gray-900 h-screen fixed left-0 top-0 border-r border-gray-800 z-40">
         <div className="p-8">
           <h1 className="text-2xl font-black text-orange-500 tracking-tighter">
@@ -56,8 +52,9 @@ export default function Sidebar() {
         </nav>
 
         <div className="p-4 border-t border-gray-800">
+          {/* Gunakan fungsi onLogout dari props agar sinkron dengan backend */}
           <button 
-            onClick={handleLogout}
+            onClick={onLogout} 
             className="flex items-center gap-3 px-4 py-3 w-full text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
           >
             <FiLogOut className="text-xl" />
@@ -66,8 +63,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* --- MOBILE & IPAD BOTTOM NAV (Tampil di iPhone 14/15 Pro & iPad) --- */}
-      {/* Menggunakan backdrop-blur agar terlihat modern di iOS */}
+      {/* --- MOBILE NAV (Tetap menggunakan Link) --- */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-xl border-t border-white/5 px-2 py-1 z-[100] flex justify-around items-center shadow-[0_-10px_30px_rgba(0,0,0,0.5)] safe-area-pb">
         {menuItems.map((item) => (
           <Link
@@ -78,11 +74,7 @@ export default function Sidebar() {
             }`}
           >
             <span className="text-2xl mb-1">{item.icon}</span>
-            <span className="text-[9px] font-bold uppercase tracking-tighter">
-              {item.name}
-            </span>
-            
-            {/* Indikator Aktif (Glow Effect) */}
+            <span className="text-[9px] font-bold uppercase tracking-tighter">{item.name}</span>
             {isActive(item.path) && (
               <div className="absolute -top-1 w-8 h-1 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.8)]"></div>
             )}
