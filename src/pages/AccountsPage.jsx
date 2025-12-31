@@ -30,14 +30,41 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
     password: '',
     role: initialData?.role || 'Cashier',
   });
+  
+  // Tambahkan state untuk menangani pesan error validasi
+  const [validationError, setValidationError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Reset error saat user mulai mengetik lagi
+    if (validationError) setValidationError('');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // VALIDASI PASSWORD (Standar Keamanan)
+    // Jika user baru, password wajib diisi. Jika edit, password opsional.
+    if (!initialData || (initialData && formData.password)) {
+      const pass = formData.password;
+      
+      if (pass.length < 8) {
+        setValidationError('Password harus minimal 8 karakter.');
+        return;
+      }
+      
+      if (!/[A-Z]/.test(pass)) {
+        setValidationError('Password harus mengandung minimal satu huruf besar (A-Z).');
+        return;
+      }
+
+      if (!/[0-9]/.test(pass)) {
+        setValidationError('Password harus mengandung minimal satu angka (0-9).');
+        return;
+      }
+    }
+
     const dataToSave = { ...formData };
     if (initialData && !formData.password) {
       delete dataToSave.password;
@@ -47,21 +74,64 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md animate-in fade-in zoom-in duration-200">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">{initialData ? 'Edit User' : 'Add New User'}</h2>
+      <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+        <h2 className="text-xl font-bold mb-4 text-gray-800">
+          {initialData ? 'Edit User' : 'Add New User'}
+        </h2>
+        
+        {/* Tampilkan pesan error jika ada */}
+        {validationError && (
+          <div className="mb-4 p-2 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm">
+            {validationError}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <input name="username" value={formData.username} onChange={handleChange} placeholder="Username" required className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" required className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder={initialData ? "New Password (optional)" : "Password"} required={!initialData} className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input 
+              name="username" 
+              value={formData.username} 
+              onChange={handleChange} 
+              placeholder="Username" 
+              required 
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+            />
+            <input 
+              type="email" 
+              name="email" 
+              value={formData.email} 
+              onChange={handleChange} 
+              placeholder="Email" 
+              required 
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+            />
+            <input 
+              type="password" 
+              name="password" 
+              value={formData.password} 
+              onChange={handleChange} 
+              placeholder={initialData ? "New Password (optional)" : "Password"} 
+              // Tambahkan hint
+              title="Minimal 8 karakter, 1 huruf besar, dan 1 angka"
+              required={!initialData} 
+              className={`w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 ${validationError.includes('Password') ? 'border-red-500' : 'border-gray-300'}`} 
+            />
+            <p className="text-[10px] text-gray-500 mt-1 italic">
+              * Password minimal 8 karakter, mengandung huruf besar dan angka.
+            </p>
+            <select 
+              name="role" 
+              value={formData.role} 
+              onChange={handleChange} 
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
               <option value="Cashier">Cashier</option>
               <option value="Seller">Seller</option>
               <option value="Admin">Admin</option>
             </select>
           </div>
           <div className="flex justify-end gap-4 mt-6">
-            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">Cancel</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg">Cancel</button>
             <button type="submit" className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">Save</button>
           </div>
         </form>
