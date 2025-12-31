@@ -18,12 +18,12 @@ async function request(endpoint, options = {}) {
     }
 
     // MENGGUNAKAN admin_token AGAR TIDAK BENTROK DENGAN TENANT
-    const token = localStorage.getItem('admin_token'); 
+    const token = sessionStorage.getItem('admin_token'); 
 
     const headers = {
         ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers,
-    };
+    };    
 
     if (token) {
         headers['Authorization'] = `Token ${token}`;
