@@ -20,6 +20,17 @@ function App() {
 
   useEffect(() => {
     const verifyUser = async () => {
+      // AMBIL TOKEN DARI URL JIKA ADA
+      const params = new URLSearchParams(window.location.search);
+      const tokenFromUrl = params.get('token');
+  
+      if (tokenFromUrl) {
+        // Simpan ke sessionStorage agar dibaca oleh api.jsx
+        sessionStorage.setItem('admin_token', tokenFromUrl);
+        // Bersihkan URL agar token tidak terlihat lagi di address bar
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+  
       try {
         const userData = await api.checkAuth();
         if (userData.user.role === 'customer') throw new Error("Unauthorized");
@@ -31,7 +42,7 @@ function App() {
       }
     };
     verifyUser();
-  }, []); 
+  }, []);
 
   const handleLogout = async () => {
     if (window.confirm('Apakah Anda yakin ingin keluar?')) {
