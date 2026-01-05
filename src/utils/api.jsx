@@ -73,7 +73,13 @@ export const getAllOrders = (params) => {
 };
 
 // PERBAIKAN URL: Tambahkan '/orders' di tengah
-export const confirmCashPayment = (orderUuid) => request(`/orders/${orderUuid}/confirm-cash/`, { method: 'POST' });
+export const confirmCashPaymentApi = (orderUuid) => {
+  // Gunakan endpoint 'status/' yang tersedia di backend
+  // Kita mengirim status 'PAID' (atau sesuaikan dengan status yang diterima backend kamu)
+  return api.post(`orders/${orderUuid}/status/`, {
+    status: 'PAID' 
+  });
+};
 
 // === FUNGSI UNTUK USERS ===
 export const getUsers = () => request('/users/');
