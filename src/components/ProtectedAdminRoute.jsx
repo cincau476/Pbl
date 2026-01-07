@@ -1,25 +1,36 @@
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import * as api from '../utils/api.jsx';
+
+const LOGIN_URL = 'https://www.kantinku.com/login';
 
 const ProtectedAdminRoute = ({ children }) => {
-  const queryParams = new URLSearchParams(window.location.search);
-  const tokenFromUrl = queryParams.get('token');
+  const [isAllowed, setIsAllowed] = useState(null);
 
-  // Jika ada token di URL (dari redirect login), simpan ke session
-  if (tokenFromUrl) {
-    sessionStorage.setItem('admin_token', tokenFromUrl);
-    // Bersihkan URL agar token tidak terlihat
-    window.history.replaceState({}, document.title, window.location.pathname);
+  useEffect(() => {
+    const verify = async () => {
+      try {
+        const data = await api.checkAuth();
+
+        if (data?.user?.role !== 'admin') {
+          throw new Error('Not admin');
+        }
+
+        setIsAllowed(true);
+      } catch {
+        sessionStorage.removeItem('admin_token');
+        window.location.href = LOGIN_URL;
+      }
+    };
+
+    verify();
+  }, []);
+
+  if (isAllowed === null) {
+    return <div className="p-10 text-center">Checking authentication...</div>;
   }
 
-  const token = sessionStorage.getItem('admin_token');
-  
-  if (!token) {
-    // Jika tidak ada token sama sekali, lempar ke portal login utama
-    window.location.href = 'https://www.kantinku.com/login';
-    return null;
-  }
-  
-  return children;
+  return isAllowed ? children : null;
 };
 
 export default ProtectedAdminRoute;
