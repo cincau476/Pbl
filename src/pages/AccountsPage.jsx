@@ -119,15 +119,11 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
             <p className="text-[10px] text-gray-500 mt-1 italic">
               * Password minimal 8 karakter, mengandung huruf besar dan angka.
             </p>
-            <select 
-              name="role" 
-              value={formData.role} 
-              onChange={handleChange} 
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="Cashier">Cashier</option>
-              <option value="Seller">Seller</option>
-              <option value="Admin">Admin</option>
+            <select name="role" value={formData.role} onChange={handleChange} className="...">
+              {/* Perhatikan value di bawah ini menggunakan huruf kecil */}
+              <option value="cashier">Cashier</option>
+              <option value="seller">Seller</option>
+              <option value="admin">Admin</option>
             </select>
           </div>
           <div className="flex justify-end gap-4 mt-6">

@@ -2,6 +2,22 @@
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
+// 1. TAMBAHAN BARU: Fungsi untuk mengambil CSRF Token dari Cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 async function request(endpoint, options = {}) {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     let url = `${API_BASE_URL}${cleanEndpoint}`;
@@ -17,26 +33,39 @@ async function request(endpoint, options = {}) {
         delete options.params;
     }
 
-    // MENGGUNAKAN admin_token AGAR TIDAK BENTROK DENGAN TENANT
-    const token = sessionStorage.getItem('admin_token'); 
+    // 2. PERUBAHAN: Hapus pengambilan token dari sessionStorage
+    // (Token sekarang akan otomatis dikirim oleh browser karena menggunakan HttpOnly Cookie)
 
     const headers = {
         ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers,
     };    
 
-    if (token) {
-        headers['Authorization'] = `Token ${token}`;
+    // 3. TAMBAHAN BARU: Sisipkan CSRF Token untuk request yang memodifikasi data (Standar Keamanan Django)
+    if (options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase())) {
+        const csrftoken = getCookie('csrftoken');
+        if (csrftoken) {
+            headers['X-CSRFToken'] = csrftoken;
+        }
     }
 
     const config = {
         ...options,
         headers,
-        credentials: 'include',
+        credentials: 'include', // Ini kunci utama agar Cookie dikirim ke Backend
     };
 
     try {
         const response = await fetch(url, config);
+        
+        // 4. TAMBAHAN BARU: Penanganan Global Error 401 (Sesi Habis / Ditolak)
+        if (response.status === 401) {
+            console.warn("Sesi tidak valid atau expired. Mengarahkan ke login...");
+            sessionStorage.removeItem('admin_token'); // Membersihkan sisa token lama jika masih ada
+            window.location.href = import.meta.env.VITE_LOGIN_URL || '/login';
+            return null; // Hentikan eksekusi
+        }
+
         if (!response.ok) {
             let errorData;
             try { errorData = await response.json(); } 
@@ -65,14 +94,10 @@ export const deleteMenuItem = (standId, menuId) => request(`/tenants/stands/${st
 // === FUNGSI UNTUK ORDERS & REPORTS ===
 export const getReportsSummary = () => request('/orders/reports/summary/'); // Pastikan URL ini sesuai backend
 
-// PERBAIKAN PENTING DI SINI:
-// 1. Tambahkan '/api' di depan
-// 2. 'params' sekarang akan diproses oleh fungsi request di atas
 export const getAllOrders = (params) => {
   return request('/orders/all/', { params }); 
 };
 
-// PERBAIKAN URL: Tambahkan '/orders' di tengah
 export const confirmCashPayment = (orderUuid) => {
   return request(`/orders/${orderUuid}/status/`, {
     method: 'POST',
@@ -97,4 +122,4 @@ export const logout = () => request('/users/logout/', {
     method: 'POST' 
 });
 
-export const checkAuth = () => request('/users/check-auth/'); // Pastikan endpoint ini benar di backend (biasanya check-auth atau user info)
+export const checkAuth = () => request('/users/check-auth/');
