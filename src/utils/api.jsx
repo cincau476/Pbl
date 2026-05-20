@@ -1,6 +1,8 @@
 // src/utils/api.jsx
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
+// Rute dinamis untuk kembali ke aplikasi utama (User/Login App)
+const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL ;
 
 // ==========================================
 // 1. FUNGSI UTILITAS CSRF TOKEN
@@ -44,7 +46,6 @@ async function request(endpoint, options = {}) {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     let url = `${API_BASE_URL}${cleanEndpoint}`;
 
-    // Handle Query Params
     if (options.params) {
         const params = new URLSearchParams();
         Object.entries(options.params).forEach(([key, val]) => {
@@ -60,14 +61,12 @@ async function request(endpoint, options = {}) {
         ...options.headers,
     };    
 
-    // PERBAIKAN: Masukkan Access Token dari LocalStorage/Memory ke Header!
-    // (Karena HttpOnly Cookie HANYA berisi refresh_token)
-    const accessToken = localStorage.getItem('access_token');
+    // PERBAIKAN: Ambil dari sessionStorage dengan nama 'admin_token' (Klop dengan LoginPage)
+    const accessToken = sessionStorage.getItem('admin_token');
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    // Sisipkan CSRF Token untuk request modifikasi data
     if (options.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase())) {
         const csrftoken = getCookie('csrftoken');
         if (csrftoken) {
@@ -78,37 +77,34 @@ async function request(endpoint, options = {}) {
     const config = {
         ...options,
         headers,
-        credentials: 'include', // Kunci untuk mengirim HttpOnly cookie (refresh_token & CSRF)
+        credentials: 'include', 
     };
 
     try {
         let response = await fetch(url, config);
         
         // ==========================================
-        // 4. INTERCEPTOR & SILENT REFRESH LOGIC (NATIVE FETCH)
+        // 4. INTERCEPTOR & SILENT REFRESH LOGIC
         // ==========================================
         if (response.status === 401 && !options._retry && !url.includes('/users/token/refresh/')) {
             
-            // JIKA SEDANG REFRESH: Antrekan request ini
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
                     failedQueue.push({ resolve, reject });
                 }).then(newToken => {
-                    // Coba request ulang dengan token baru dari antrean
                     options.headers = options.headers || {};
                     options.headers['Authorization'] = `Bearer ${newToken}`;
                     return request(endpoint, options);
                 }).catch(err => Promise.reject(err));
             }
 
-            // JIKA BELUM REFRESH: Kunci gembok dan minta token baru
             options._retry = true;
             isRefreshing = true;
 
             try {
                 const refreshRes = await fetch(`${API_BASE_URL}/users/token/refresh/`, {
                     method: 'POST',
-                    credentials: 'include', // Bawa HttpOnly Cookie refresh_token
+                    credentials: 'include', 
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCookie('csrftoken')
@@ -122,24 +118,21 @@ async function request(endpoint, options = {}) {
                 const refreshData = await refreshRes.json();
                 const newAccessToken = refreshData.access;
                 
-                // Simpan Access Token yang baru
-                localStorage.setItem('access_token', newAccessToken);
+                // PERBAIKAN: Simpan token baru ke sessionStorage 'admin_token'
+                sessionStorage.setItem('admin_token', newAccessToken);
 
-                // Jalankan request yang sempat gagal (Request Asli)
                 options.headers['Authorization'] = `Bearer ${newAccessToken}`;
                 
-                // Buka gembok dan proses antrean
                 processQueue(null, newAccessToken);
-                
-                // Panggil ulang fetch dengan config yang sudah diperbarui
                 return request(endpoint, options);
 
             } catch (refreshErr) {
-                // Refresh token expired / diblacklist
                 processQueue(refreshErr, null);
                 console.warn("Sesi tidak valid atau expired. Mengarahkan ke login...");
-                localStorage.removeItem('access_token'); 
-                window.location.href = import.meta.env.VITE_LOGIN_URL || '/login';
+                // PERBAIKAN: Bersihkan session dan arahkan kembali ke app utama
+                sessionStorage.removeItem('admin_token'); 
+                sessionStorage.removeItem('user'); 
+                window.location.href = `${MAIN_APP_URL}/login`;
                 return null;
             } finally {
                 isRefreshing = false;
@@ -159,12 +152,11 @@ async function request(endpoint, options = {}) {
         return response.status === 204 ? null : response.json();
 
     } catch (error) {
-        if (import.meta.env.MODE !== 'production') {
-            console.error('API Error:', error);
-        }
+        console.error('API Error:', error);
         throw error;
     }
 }
+
 
 // === Stand API ===
 export const getStands = () => request('/tenants/stands/');

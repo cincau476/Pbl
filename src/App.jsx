@@ -1,4 +1,5 @@
 // src/App.jsx
+// src/App.jsx
 import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
@@ -14,21 +15,24 @@ import ReportsPage from './pages/ReportsPage.jsx';
 
 import * as api from './utils/api.jsx';
 
-const LOGIN_URL = 'https://www.kantinku.com/login';
+// Rute dinamis untuk logout kembali ke aplikasi utama
+const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL ;
 
 function App() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
   const handleLogout = async () => {
-    if (!window.confirm('Apakah Anda yakin ingin keluar?')) return;
+    if (!window.confirm('Apakah Anda yakin ingin keluar dari halaman Admin?')) return;
 
     try {
       await api.logout();
     } catch (err) {
-      console.warn('Logout gagal di server, lanjut logout lokal');
+      console.warn('Logout gagal di server, lanjut pembersihan sesi lokal');
     } finally {
+      // PERBAIKAN: Bersihkan sesi dengan benar
       sessionStorage.removeItem('admin_token');
-      window.location.href = LOGIN_URL;
+      sessionStorage.removeItem('user');
+      window.location.href = `${MAIN_APP_URL}/login`;
     }
   };
 

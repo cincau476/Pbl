@@ -1,8 +1,9 @@
+// src/components/ProtectedAdminRoute.jsx
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import * as api from '../utils/api.jsx';
 
-const LOGIN_URL = 'https://www.kantinku.com/login';
+// Gunakan URL App Utama secara dinamis
+const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL  ;
 
 const ProtectedAdminRoute = ({ children }) => {
   const [isAllowed, setIsAllowed] = useState(null);
@@ -19,7 +20,8 @@ const ProtectedAdminRoute = ({ children }) => {
         setIsAllowed(true);
       } catch {
         sessionStorage.removeItem('admin_token');
-        window.location.href = LOGIN_URL;
+        sessionStorage.removeItem('user');
+        window.location.href = `${MAIN_APP_URL}/login`;
       }
     };
 
@@ -27,7 +29,7 @@ const ProtectedAdminRoute = ({ children }) => {
   }, []);
 
   if (isAllowed === null) {
-    return <div className="p-10 text-center">Checking authentication...</div>;
+    return <div className="flex justify-center items-center h-screen font-bold text-gray-500">Mengecek otorisasi keamanan...</div>;
   }
 
   return isAllowed ? children : null;
