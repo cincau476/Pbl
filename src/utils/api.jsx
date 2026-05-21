@@ -187,7 +187,10 @@ export const confirmCashPayment = (orderUuid) => request(`/orders/${orderUuid}/s
 });
 
 // === FUNGSI UNTUK USERS ===
-export const getUsers = () => request('/users/');
+export const getUsers = async () => {
+    const data = await request('/users/');
+    return data?.results || data || [];
+};
 export const getUsersSummary = () => request('/users/summary/');
 export const addUser = (userData) => request('/users/', { method: 'POST', body: JSON.stringify(userData) });
 export const updateUser = (userId, userData) => request(`/users/${userId}/`, { method: 'PATCH', body: JSON.stringify(userData) });
