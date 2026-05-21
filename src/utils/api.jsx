@@ -159,7 +159,10 @@ async function request(endpoint, options = {}) {
 
 
 // === Stand API ===
-export const getStands = () => request('/tenants/stands/');
+export const getStands = async () => {
+    const data = await request('/tenants/stands/');
+    return data?.results || data || []; 
+};
 export const addStand = (standData) => request('/tenants/stands/', { method: 'POST', body: JSON.stringify(standData) });
 export const updateStand = (id, standData) => request(`/tenants/stands/${id}/`, { method: 'PUT', body: JSON.stringify(standData) });
 export const deleteStand = (id) => request(`/tenants/stands/${id}/`, { method: 'DELETE' });
@@ -173,7 +176,10 @@ export const deleteMenuItem = (standId, menuId) => request(`/tenants/stands/${st
 // === FUNGSI UNTUK ORDERS & REPORTS ===
 export const getReportsSummary = () => request('/orders/reports/summary/');
 
-export const getAllOrders = (params) => request('/orders/all/', { params });
+export const getAllOrders = async (params) => {
+    const data = await request('/orders/all/', { params });
+    return data?.results || data || [];
+};
 
 export const confirmCashPayment = (orderUuid) => request(`/orders/${orderUuid}/status/`, {
     method: 'POST',
