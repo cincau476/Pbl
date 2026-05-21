@@ -1,8 +1,8 @@
 // src/utils/api.jsx
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
+const API_BASE_URL = "/api" ;
 // Rute dinamis untuk kembali ke aplikasi utama (User/Login App)
-const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL ;
+const MAIN_APP_URL = "/"  ;
 
 // ==========================================
 // 1. FUNGSI UTILITAS CSRF TOKEN
