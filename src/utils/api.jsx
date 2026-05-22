@@ -208,3 +208,13 @@ export const logout = () => request('/users/logout/', {
 });
 
 export const checkAuth = () => request('/users/check-auth/');
+
+// === MFA SETUP ===
+export const generateMfaSetup = () => request('/users/mfa/setup/generate/', { 
+    method: 'POST' 
+});
+
+export const verifyMfaSetup = (otpCode) => request('/users/mfa/setup/verify/', { 
+    method: 'POST', 
+    body: JSON.stringify({ otp_code: otpCode }) 
+});
