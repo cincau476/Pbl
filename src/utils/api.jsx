@@ -1,8 +1,9 @@
 // src/utils/api.jsx
 
 const API_BASE_URL = "/api" ;
+
 // Rute dinamis untuk kembali ke aplikasi utama (User/Login App)
-const MAIN_APP_URL = "window.location.origin"  ;
+const MAIN_APP_URL = window.location.origin;
 
 // ==========================================
 // 1. FUNGSI UTILITAS CSRF TOKEN
