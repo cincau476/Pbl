@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import * as api from '../utils/api.jsx'; 
 import UserTable from '../components/UserTable.jsx'; 
+import MfaSetupModal from '../components/MfaSetupModal.jsx';
 
-// Ikon fungsional yang dipertahankan untuk Header & Tombol
+// Ikon fungsional
 const FiSearch = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 );
@@ -12,7 +13,7 @@ const FiPlus = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
 const FiUser = (props) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
 );
 
 // Komponen Modal Tambah/Edit User
@@ -22,13 +23,11 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
     email: initialData?.email || '',
     password: '',
     role: initialData?.role || 'cashier',
-    // 1. Tambahkan state untuk MFA
     is_mfa_enabled: initialData?.is_mfa_enabled || false, 
   });
   
   const [validationError, setValidationError] = useState('');
 
-  // 2. Perbarui handleChange untuk mendeteksi checkbox MFA
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ 
@@ -69,7 +68,7 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 backdrop-blur-sm">
-      <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md">
+      <div className="bg-white p-6 rounded-xl shadow-2xl w-full max-w-md animate-fadeIn">
         <h2 className="text-xl font-bold mb-4 text-gray-800">
           {initialData ? 'Edit User' : 'Add New User'}
         </h2>
@@ -125,7 +124,6 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
               <option value="admin">Admin</option>
             </select>
 
-            {/* 3. Komponen Toggle MFA (Tanpa Icon Tambahan) */}
             <div className="flex items-center justify-between p-3 mt-2 bg-gray-50 border border-gray-200 rounded-lg">
               <div>
                 <p className="text-sm font-semibold text-gray-800">Wajibkan MFA</p>
@@ -174,6 +172,9 @@ const AccountsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // State untuk mengontrol Modal Setup MFA
+  const [isMfaOpen, setIsMfaOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -184,9 +185,8 @@ const AccountsPage = () => {
           api.getUsers(),       
           api.getUsersSummary() 
         ]);
-        // 4. Perbaikan Array untuk memastikan map/filter berfungsi
-        const safeUsers = Array.isArray(usersResponse) ? usersResponse : (usersResponse?.results || []);
         
+        const safeUsers = Array.isArray(usersResponse) ? usersResponse : (usersResponse?.results || []);
         setUsers(safeUsers);
         setSummary(summaryResponse);
       } catch (err) {
@@ -266,8 +266,16 @@ const AccountsPage = () => {
     <div className="flex-1 flex flex-col h-screen">
       <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
+        
         <div className="flex items-center gap-4">
-          {/* Ikon Lonceng dihilangkan untuk tampilan yang lebih bersih */}
+          {/* Tombol Setup MFA */}
+          <button
+            onClick={() => setIsMfaOpen(true)}
+            className="flex items-center gap-2 bg-slate-900 text-white font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm border border-slate-700"
+          >
+            🔐 Setup MFA
+          </button>
+
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
             <FiUser size={18} />
           </div>
@@ -332,6 +340,10 @@ const AccountsPage = () => {
             </>
           )}
         </div>
+
+        {/* Komponen Modal MFA yang ditambahkan */}
+        <MfaSetupModal isOpen={isMfaOpen} onClose={() => setIsMfaOpen(false)} />
+        
       </main>
     </div>
   );
