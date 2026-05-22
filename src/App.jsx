@@ -16,7 +16,7 @@ import ReportsPage from './pages/ReportsPage.jsx';
 import * as api from './utils/api.jsx';
 
 // Rute dinamis untuk logout kembali ke aplikasi utama
-const MAIN_APP_URL = import.meta.env.VITE_MAIN_APP_URL ;
+const MAIN_APP_URL = window.location.origin;
 
 function App() {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
