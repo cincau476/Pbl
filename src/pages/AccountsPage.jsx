@@ -173,22 +173,31 @@ const AccountsPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // State untuk mengontrol Modal Setup MFA
+  // State untuk mengontrol Modal Setup MFA & Current User
   const [isMfaOpen, setIsMfaOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
-        const [usersResponse, summaryResponse] = await Promise.all([
+        
+        // Panggil 3 API secara paralel (termasuk checkAuth untuk data akun yang sedang login)
+        const [usersResponse, summaryResponse, authResponse] = await Promise.all([
           api.getUsers(),       
-          api.getUsersSummary() 
+          api.getUsersSummary(),
+          api.checkAuth()
         ]);
         
         const safeUsers = Array.isArray(usersResponse) ? usersResponse : (usersResponse?.results || []);
         setUsers(safeUsers);
         setSummary(summaryResponse);
+        
+        // Simpan data user saat ini
+        if (authResponse && authResponse.user) {
+          setCurrentUser(authResponse.user);
+        }
       } catch (err) {
         console.error("Gagal mengambil data akun:", err);
         setError(`Tidak dapat memuat data: ${err.message}`); 
@@ -268,13 +277,19 @@ const AccountsPage = () => {
         <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
         
         <div className="flex items-center gap-4">
-          {/* Tombol Setup MFA */}
-          <button
-            onClick={() => setIsMfaOpen(true)}
-            className="flex items-center gap-2 bg-slate-900 text-white font-semibold text-sm px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm border border-slate-700"
-          >
-            🔐 Setup MFA
-          </button>
+          {/* Tombol Setup MFA Dinamis */}
+          {currentUser && (
+            <button
+              onClick={() => setIsMfaOpen(true)}
+              className={`flex items-center gap-2 font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm border ${
+                currentUser.is_mfa_enabled
+                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:shadow-green-500/20'
+                  : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:shadow-red-500/20'
+              }`}
+            >
+              {currentUser.is_mfa_enabled ? '✅ MFA Aktif (Reset)' : '⚠️ Aktifkan MFA'}
+            </button>
+          )}
 
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
             <FiUser size={18} />
@@ -341,8 +356,12 @@ const AccountsPage = () => {
           )}
         </div>
 
-        {/* Komponen Modal MFA yang ditambahkan */}
-        <MfaSetupModal isOpen={isMfaOpen} onClose={() => setIsMfaOpen(false)} />
+        {/* Komponen Modal MFA dengan sinyal onSuccess */}
+        <MfaSetupModal 
+          isOpen={isMfaOpen} 
+          onClose={() => setIsMfaOpen(false)} 
+          onSuccess={() => setCurrentUser(prev => ({ ...prev, is_mfa_enabled: true }))}
+        />
         
       </main>
     </div>
