@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as api from '../utils/api.jsx';
 
-export default function MfaSetupModal({ isOpen, onClose }) {
+export default function MfaSetupModal({ isOpen, onClose,onSuccess }) {
   const [step, setStep] = useState(1); // 1: QR Code, 2: Backup Codes
   const [qrImage, setQrImage] = useState('');
   const [secretKey, setSecretKey] = useState('');
@@ -43,10 +43,13 @@ export default function MfaSetupModal({ isOpen, onClose }) {
     if (!otpCode) return;
     setLoading(true);
     setError('');
+    
     try {
       const data = await api.verifyMfaSetup(otpCode);
       setBackupCodes(data.backup_codes || []);
       setStep(2); // Pindah ke langkah menampilkan backup codes
+      
+      if (onSuccess) onSuccess(); 
     } catch (err) {
       setError(err.message || 'Kode OTP salah atau kedaluwarsa.');
     } finally {
