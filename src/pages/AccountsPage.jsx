@@ -5,7 +5,6 @@ import * as api from '../utils/api.jsx';
 import UserTable from '../components/UserTable.jsx'; 
 import MfaSetupModal from '../components/MfaSetupModal.jsx';
 
-// Ikon fungsional
 const FiSearch = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 );
@@ -16,7 +15,6 @@ const FiUser = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
 );
 
-// Komponen Modal Tambah/Edit User
 const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
   const [formData, setFormData] = useState({
     username: initialData?.username || '',
@@ -28,7 +26,6 @@ const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
     existing_tenant_id: '',
   });
   
-  // State untuk mengontrol apakah membuat stand baru atau gabung yang sudah ada
   const [sellerMode, setSellerMode] = useState('new'); 
   const [validationError, setValidationError] = useState('');
 
@@ -44,6 +41,7 @@ const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Validasi Password
     if (!initialData || (initialData && formData.password)) {
       const pass = formData.password;
       if (pass.length < 8) return setValidationError('Password harus minimal 8 karakter.');
@@ -51,15 +49,28 @@ const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
       if (!/[0-9]/.test(pass)) return setValidationError('Password harus mengandung minimal satu angka (0-9).');
     }
 
-    const dataToSave = { ...formData };
-    if (initialData && !formData.password) delete dataToSave.password;
-    
-    // Bersihkan field yang tidak terpakai tergantung modenya
-    if (formData.role === 'seller' && !initialData) {
-      if (sellerMode === 'new') delete dataToSave.existing_tenant_id;
-      if (sellerMode === 'existing') delete dataToSave.stand_name;
+    // MEMBANGUN DATA SECARA EKSPLISIT (ANTI ERROR 400)
+    const dataToSave = {
+      username: formData.username,
+      email: formData.email,
+      role: formData.role,
+      is_mfa_enabled: formData.is_mfa_enabled
+    };
+
+    if (!initialData || formData.password) {
+      dataToSave.password = formData.password;
     }
 
+    // Hanya lampirkan data Stand jika role = Seller
+    if (formData.role === 'seller' && !initialData) {
+      if (sellerMode === 'new' && formData.stand_name.trim() !== '') {
+        dataToSave.stand_name = formData.stand_name;
+      } else if (sellerMode === 'existing' && formData.existing_tenant_id !== '') {
+        dataToSave.existing_tenant_id = parseInt(formData.existing_tenant_id);
+      }
+    }
+
+    // Kirim data yang sudah bersih ke API
     onSave(dataToSave);
   };
 
@@ -88,7 +99,6 @@ const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
               <option value="admin">Admin</option>
             </select>
 
-            {/* OPSI GABUNG / BUAT STAND BARU (Hanya untuk Seller Baru) */}
             {formData.role === 'seller' && !initialData && (
               <div className="p-3 mt-2 bg-orange-50 border border-orange-200 rounded-lg animate-fadeIn">
                 <label className="block text-xs font-bold text-orange-800 uppercase tracking-wider mb-2">Penempatan Stand Kantin</label>
@@ -114,9 +124,6 @@ const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
                     ))}
                   </select>
                 )}
-                <p className="text-[10px] text-orange-600 mt-2 italic">
-                  *Gabung Stand Lama berguna untuk pekerja Shift 2 atau rotasi pegawai pada stand yang sama.
-                </p>
               </div>
             )}
 
@@ -142,22 +149,18 @@ const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
   );
 };
 
-// Komponen Kartu Ringkasan
-const SummaryCard = ({ title, count, description, borderColor }) => {
-  return (
-    <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderColor}`}>
-      <h3 className="text-gray-500 font-medium">{title}</h3>
-      <p className="text-3xl font-bold text-gray-800 my-1">{count}</p>
-      <p className="text-xs text-gray-400">{description}</p>
-    </div>
-  );
-};
+const SummaryCard = ({ title, count, description, borderColor }) => (
+  <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderColor}`}>
+    <h3 className="text-gray-500 font-medium">{title}</h3>
+    <p className="text-3xl font-bold text-gray-800 my-1">{count}</p>
+    <p className="text-xs text-gray-400">{description}</p>
+  </div>
+);
 
-// Halaman Utama AccountsPage
 const AccountsPage = () => {
   const [users, setUsers] = useState([]);
   const [summary, setSummary] = useState(null);
-  const [tenants, setTenants] = useState([]); // State Daftar Tenant/Stand
+  const [tenants, setTenants] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -173,12 +176,11 @@ const AccountsPage = () => {
         setLoading(true);
         setError(null);
         
-        // Panggil API secara paralel termasuk getTenants()
         const [usersResponse, summaryResponse, authResponse, tenantsResponse] = await Promise.all([
           api.getUsers(),       
           api.getUsersSummary(),
           api.checkAuth(),
-          api.getTenants().catch(() => []) // Mengambil daftar stand
+          api.getTenants().catch(() => []) 
         ]);
         
         setUsers(Array.isArray(usersResponse) ? usersResponse : (usersResponse?.results || []));
@@ -223,7 +225,8 @@ const AccountsPage = () => {
         setUsers([...users, response]);
         setIsModalOpen(false);
       } catch (err) {
-        alert(`Gagal menyimpan: ${err.message}`);
+        // PERBAIKAN UX: Munculkan error API yang asli agar mudah dilacak
+        alert(`Gagal menyimpan: ${err.response?.data?.detail || err.message}`);
       }
     }
   };
@@ -258,7 +261,7 @@ const AccountsPage = () => {
         <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
         <div className="flex items-center gap-4">
           {currentUser && (
-            <button onClick={() => setIsMfaOpen(true)} className={`flex items-center gap-2 font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm border ${ currentUser.is_mfa_enabled ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:shadow-green-500/20' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:shadow-red-500/20' }`}>
+            <button onClick={() => setIsMfaOpen(true)} className={`flex items-center gap-2 font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm border ${ currentUser.is_mfa_enabled ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100' }`}>
               {currentUser.is_mfa_enabled ? '✅ MFA Aktif (Reset)' : '⚠️ Aktifkan MFA'}
             </button>
           )}
@@ -272,7 +275,7 @@ const AccountsPage = () => {
             <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FiSearch className="text-gray-400" /></span>
             <input type="text" placeholder="Search users by name or email..." className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <button onClick={handleOpenAddModal} className="w-full md:w-auto bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
+          <button onClick={handleOpenAddModal} className="w-full md:w-auto bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-sm">
             <FiPlus size={20} /> Add New User
           </button>
         </div>
@@ -282,7 +285,7 @@ const AccountsPage = () => {
             onClose={() => setIsModalOpen(false)}
             onSave={handleSaveUser}
             initialData={editingUser}
-            availableTenants={tenants} // Mengirim daftar tenant ke Modal
+            availableTenants={tenants} 
           />
         )}  
 
