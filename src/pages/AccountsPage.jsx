@@ -24,6 +24,8 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
     password: '',
     role: initialData?.role || 'cashier',
     is_mfa_enabled: initialData?.is_mfa_enabled || false, 
+    // Tambahkan state untuk stand_name
+    stand_name: '', 
   });
   
   const [validationError, setValidationError] = useState('');
@@ -123,6 +125,26 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
               <option value="seller">Seller</option>
               <option value="admin">Admin</option>
             </select>
+
+            {/* Input Dinamis Khusus Pembuatan Akun Seller */}
+            {formData.role === 'seller' && !initialData && (
+              <div className="p-3 mt-2 bg-orange-50 border border-orange-200 rounded-lg animate-fadeIn">
+                <label className="block text-xs font-bold text-orange-800 uppercase tracking-wider mb-1">
+                  Nama Stand / Tenant (Otomatis Dibuat)
+                </label>
+                <input 
+                  type="text" 
+                  name="stand_name" 
+                  value={formData.stand_name} 
+                  onChange={handleChange} 
+                  placeholder="Contoh: Stand Nasi Padang" 
+                  className="w-full p-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none bg-white text-sm" 
+                />
+                <p className="text-[10px] text-orange-600 mt-1 italic">
+                  *Opsional. Jika kosong, sistem akan merandom nama stand.
+                </p>
+              </div>
+            )}
 
             <div className="flex items-center justify-between p-3 mt-2 bg-gray-50 border border-gray-200 rounded-lg">
               <div>
