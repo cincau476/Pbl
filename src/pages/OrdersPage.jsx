@@ -110,12 +110,6 @@ const OrdersPage = () => {
       <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-800">Orders</h1>
         <div className="flex items-center gap-4">
-          <button className="relative text-gray-600 hover:text-gray-800">
-            <FiBell size={22} />
-          </button>
-          <button className="text-gray-600 hover:text-gray-800">
-            <FiUser size={22} />
-          </button>
         </div>
       </header>
 
