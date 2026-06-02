@@ -218,3 +218,5 @@ export const verifyMfaSetup = (otpCode) => request('/users/mfa/setup/verify/', {
     method: 'POST', 
     body: JSON.stringify({ otp_code: otpCode }) 
 });
+
+export const getTenants = () => request('/tenants/stands/');
