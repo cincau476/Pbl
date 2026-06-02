@@ -137,7 +137,7 @@ const StandsAndMenuPage = () => {
     <div className="flex-1 flex flex-col h-screen">
        <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
             <h1 className="text-xl font-bold text-gray-800">Stands & Menu</h1>
-            <div className="flex items-center gap-4"> <FiBell size={22} /> <FiUser size={22} /> </div>
+            <div className="flex items-center gap-4"></div>
         </header>
 
       <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
