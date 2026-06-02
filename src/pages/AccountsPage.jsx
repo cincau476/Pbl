@@ -17,17 +17,19 @@ const FiUser = (props) => (
 );
 
 // Komponen Modal Tambah/Edit User
-const UserFormModal = ({ onClose, onSave, initialData }) => {
+const UserFormModal = ({ onClose, onSave, initialData, availableTenants }) => {
   const [formData, setFormData] = useState({
     username: initialData?.username || '',
     email: initialData?.email || '',
     password: '',
     role: initialData?.role || 'cashier',
     is_mfa_enabled: initialData?.is_mfa_enabled || false, 
-    // Tambahkan state untuk stand_name
     stand_name: '', 
+    existing_tenant_id: '',
   });
   
+  // State untuk mengontrol apakah membuat stand baru atau gabung yang sudah ada
+  const [sellerMode, setSellerMode] = useState('new'); 
   const [validationError, setValidationError] = useState('');
 
   const handleChange = (e) => {
@@ -36,35 +38,28 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
       ...prev, 
       [name]: type === 'checkbox' ? checked : value 
     }));
-    
     if (validationError) setValidationError('');
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // VALIDASI PASSWORD
     if (!initialData || (initialData && formData.password)) {
       const pass = formData.password;
-      
-      if (pass.length < 8) {
-        setValidationError('Password harus minimal 8 karakter.');
-        return;
-      }
-      if (!/[A-Z]/.test(pass)) {
-        setValidationError('Password harus mengandung minimal satu huruf besar (A-Z).');
-        return;
-      }
-      if (!/[0-9]/.test(pass)) {
-        setValidationError('Password harus mengandung minimal satu angka (0-9).');
-        return;
-      }
+      if (pass.length < 8) return setValidationError('Password harus minimal 8 karakter.');
+      if (!/[A-Z]/.test(pass)) return setValidationError('Password harus mengandung minimal satu huruf besar (A-Z).');
+      if (!/[0-9]/.test(pass)) return setValidationError('Password harus mengandung minimal satu angka (0-9).');
     }
 
     const dataToSave = { ...formData };
-    if (initialData && !formData.password) {
-      delete dataToSave.password;
+    if (initialData && !formData.password) delete dataToSave.password;
+    
+    // Bersihkan field yang tidak terpakai tergantung modenya
+    if (formData.role === 'seller' && !initialData) {
+      if (sellerMode === 'new') delete dataToSave.existing_tenant_id;
+      if (sellerMode === 'existing') delete dataToSave.stand_name;
     }
+
     onSave(dataToSave);
   };
 
@@ -76,72 +71,51 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
         </h2>
         
         {validationError && (
-          <div className="mb-4 p-2 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm">
-            {validationError}
-          </div>
+          <div className="mb-4 p-2 bg-red-100 border-l-4 border-red-500 text-red-700 text-sm">{validationError}</div>
         )}
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <input 
-              name="username" 
-              value={formData.username} 
-              onChange={handleChange} 
-              placeholder="Username" 
-              required 
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-            />
-            <input 
-              type="email" 
-              name="email" 
-              value={formData.email} 
-              onChange={handleChange} 
-              placeholder="Email" 
-              required 
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
-            />
+            <input name="username" value={formData.username} onChange={handleChange} placeholder="Username" required className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+            <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" required className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
             <div>
-              <input 
-                type="password" 
-                name="password" 
-                value={formData.password} 
-                onChange={handleChange} 
-                placeholder={initialData ? "New Password (optional)" : "Password"} 
-                required={!initialData} 
-                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${validationError.includes('Password') ? 'border-red-500' : 'border-gray-300'}`} 
-              />
-              <p className="text-[10px] text-gray-500 mt-1 italic pl-1">
-                * Minimal 8 karakter, 1 huruf besar, 1 angka.
-              </p>
+              <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder={initialData ? "New Password (optional)" : "Password"} required={!initialData} className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${validationError.includes('Password') ? 'border-red-500' : 'border-gray-300'}`} />
             </div>
             
-            <select 
-              name="role" 
-              value={formData.role} 
-              onChange={handleChange} 
-              className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-            >
+            <select name="role" value={formData.role} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
               <option value="cashier">Cashier</option>
               <option value="seller">Seller</option>
               <option value="admin">Admin</option>
             </select>
 
-            {/* Input Dinamis Khusus Pembuatan Akun Seller */}
+            {/* OPSI GABUNG / BUAT STAND BARU (Hanya untuk Seller Baru) */}
             {formData.role === 'seller' && !initialData && (
               <div className="p-3 mt-2 bg-orange-50 border border-orange-200 rounded-lg animate-fadeIn">
-                <label className="block text-xs font-bold text-orange-800 uppercase tracking-wider mb-1">
-                  Nama Stand / Tenant (Otomatis Dibuat)
-                </label>
-                <input 
-                  type="text" 
-                  name="stand_name" 
-                  value={formData.stand_name} 
-                  onChange={handleChange} 
-                  placeholder="Contoh: Stand Nasi Padang" 
-                  className="w-full p-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none bg-white text-sm" 
-                />
-                <p className="text-[10px] text-orange-600 mt-1 italic">
-                  *Opsional. Jika kosong, sistem akan merandom nama stand.
+                <label className="block text-xs font-bold text-orange-800 uppercase tracking-wider mb-2">Penempatan Stand Kantin</label>
+                
+                <div className="flex gap-4 mb-3">
+                  <label className="flex items-center gap-1 text-sm cursor-pointer">
+                    <input type="radio" name="sellerMode" checked={sellerMode === 'new'} onChange={() => setSellerMode('new')} className="accent-orange-500" />
+                    Buat Stand Baru
+                  </label>
+                  <label className="flex items-center gap-1 text-sm cursor-pointer">
+                    <input type="radio" name="sellerMode" checked={sellerMode === 'existing'} onChange={() => setSellerMode('existing')} className="accent-orange-500" />
+                    Gabung Stand Lama
+                  </label>
+                </div>
+
+                {sellerMode === 'new' ? (
+                  <input type="text" name="stand_name" value={formData.stand_name} onChange={handleChange} placeholder="Contoh: Stand Nasi Padang" className="w-full p-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none bg-white text-sm" />
+                ) : (
+                  <select name="existing_tenant_id" value={formData.existing_tenant_id} onChange={handleChange} className="w-full p-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none bg-white text-sm" required>
+                    <option value="">-- Pilih Stand yang Sudah Ada --</option>
+                    {availableTenants.map(tenant => (
+                      <option key={tenant.id} value={tenant.id}>{tenant.name}</option>
+                    ))}
+                  </select>
+                )}
+                <p className="text-[10px] text-orange-600 mt-2 italic">
+                  *Gabung Stand Lama berguna untuk pekerja Shift 2 atau rotasi pegawai pada stand yang sama.
                 </p>
               </div>
             )}
@@ -152,13 +126,7 @@ const UserFormModal = ({ onClose, onSave, initialData }) => {
                 <p className="text-xs text-gray-500">Minta kode OTP saat user ini login</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  name="is_mfa_enabled"
-                  checked={formData.is_mfa_enabled} 
-                  onChange={handleChange}
-                  className="sr-only peer" 
-                />
+                <input type="checkbox" name="is_mfa_enabled" checked={formData.is_mfa_enabled} onChange={handleChange} className="sr-only peer" />
                 <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
               </label>
             </div>
@@ -189,13 +157,13 @@ const SummaryCard = ({ title, count, description, borderColor }) => {
 const AccountsPage = () => {
   const [users, setUsers] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [tenants, setTenants] = useState([]); // State Daftar Tenant/Stand
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // State untuk mengontrol Modal Setup MFA & Current User
   const [isMfaOpen, setIsMfaOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -205,23 +173,21 @@ const AccountsPage = () => {
         setLoading(true);
         setError(null);
         
-        // Panggil 3 API secara paralel (termasuk checkAuth untuk data akun yang sedang login)
-        const [usersResponse, summaryResponse, authResponse] = await Promise.all([
+        // Panggil API secara paralel termasuk getTenants()
+        const [usersResponse, summaryResponse, authResponse, tenantsResponse] = await Promise.all([
           api.getUsers(),       
           api.getUsersSummary(),
-          api.checkAuth()
+          api.checkAuth(),
+          api.getTenants().catch(() => []) // Mengambil daftar stand
         ]);
         
-        const safeUsers = Array.isArray(usersResponse) ? usersResponse : (usersResponse?.results || []);
-        setUsers(safeUsers);
+        setUsers(Array.isArray(usersResponse) ? usersResponse : (usersResponse?.results || []));
         setSummary(summaryResponse);
+        setTenants(Array.isArray(tenantsResponse) ? tenantsResponse : (tenantsResponse?.results || []));
         
-        // Simpan data user saat ini
-        if (authResponse && authResponse.user) {
-          setCurrentUser(authResponse.user);
-        }
+        if (authResponse && authResponse.user) setCurrentUser(authResponse.user);
       } catch (err) {
-        console.error("Gagal mengambil data akun:", err);
+        console.error("Gagal mengambil data:", err);
         setError(`Tidak dapat memuat data: ${err.message}`); 
       } finally {
         setLoading(false);
@@ -236,7 +202,6 @@ const AccountsPage = () => {
         await api.deleteUser(userId); 
         setUsers(users.filter(user => user.id !== userId));
       } catch (err) {
-        console.error("Gagal menghapus pengguna:", err);
         alert(`Failed to delete user: ${err.message}`);
       }
     }
@@ -250,7 +215,6 @@ const AccountsPage = () => {
         setIsModalOpen(false);
         setEditingUser(null);
       } catch (err) {
-        console.error("Gagal mengupdate pengguna:", err);
         alert(`Gagal update: ${err.message}`);
       }
     } else {
@@ -259,7 +223,6 @@ const AccountsPage = () => {
         setUsers([...users, response]);
         setIsModalOpen(false);
       } catch (err) {
-        console.error("Gagal menambah pengguna:", err);
         alert(`Gagal menyimpan: ${err.message}`);
       }
     }
@@ -283,12 +246,8 @@ const AccountsPage = () => {
   if (loading) {
     return (
       <div className="flex-1 flex flex-col h-screen">
-        <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
-        </header>
-        <main className="flex-1 flex items-center justify-center bg-gray-50">
-            <p className="text-gray-500 animate-pulse font-medium">Loading data...</p>
-        </main>
+        <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between"><h1 className="text-xl font-bold text-gray-800">Accounts</h1></header>
+        <main className="flex-1 flex items-center justify-center bg-gray-50"><p className="text-gray-500 animate-pulse font-medium">Loading data...</p></main>
       </div>
     );
   }
@@ -297,47 +256,24 @@ const AccountsPage = () => {
     <div className="flex-1 flex flex-col h-screen">
       <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-800">Accounts</h1>
-        
         <div className="flex items-center gap-4">
-          {/* Tombol Setup MFA Dinamis */}
           {currentUser && (
-            <button
-              onClick={() => setIsMfaOpen(true)}
-              className={`flex items-center gap-2 font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm border ${
-                currentUser.is_mfa_enabled
-                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:shadow-green-500/20'
-                  : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:shadow-red-500/20'
-              }`}
-            >
+            <button onClick={() => setIsMfaOpen(true)} className={`flex items-center gap-2 font-semibold text-sm px-4 py-2.5 rounded-xl transition-all shadow-sm border ${ currentUser.is_mfa_enabled ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:shadow-green-500/20' : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:shadow-red-500/20' }`}>
               {currentUser.is_mfa_enabled ? '✅ MFA Aktif (Reset)' : '⚠️ Aktifkan MFA'}
             </button>
           )}
-
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-            <FiUser size={18} />
-          </div>
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600"><FiUser size={18} /></div>
         </div>
       </header>
 
       <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <div className="relative w-full md:w-1/3">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <FiSearch className="text-gray-400" />
-            </span>
-            <input 
-              type="text" 
-              placeholder="Search users by name or email..." 
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3"><FiSearch className="text-gray-400" /></span>
+            <input type="text" placeholder="Search users by name or email..." className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <button
-            onClick={handleOpenAddModal}
-            className="w-full md:w-auto bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
-            <FiPlus size={20} />
-            Add New User
+          <button onClick={handleOpenAddModal} className="w-full md:w-auto bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-sm hover:shadow-md">
+            <FiPlus size={20} /> Add New User
           </button>
         </div>
         
@@ -346,6 +282,7 @@ const AccountsPage = () => {
             onClose={() => setIsModalOpen(false)}
             onSave={handleSaveUser}
             initialData={editingUser}
+            availableTenants={tenants} // Mengirim daftar tenant ke Modal
           />
         )}  
 
@@ -356,35 +293,14 @@ const AccountsPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {summary && (
             <>
-              <SummaryCard 
-                title="Admins" 
-                count={summary.admins.count} 
-                description={summary.admins.description || "System Administrators"}
-                borderColor="border-blue-500" 
-              />
-              <SummaryCard 
-                title="Sellers" 
-                count={summary.sellers.count} 
-                description={summary.sellers.description || "Food Tenant Owners"}
-                borderColor="border-orange-500" 
-              />
-              <SummaryCard 
-                title="Cashiers" 
-                count={summary.cashiers.count} 
-                description={summary.cashiers.description || "Payment Processors"}
-                borderColor="border-green-500" 
-              />
+              <SummaryCard title="Admins" count={summary.admins.count} description={summary.admins.description || "System Administrators"} borderColor="border-blue-500" />
+              <SummaryCard title="Sellers" count={summary.sellers.count} description={summary.sellers.description || "Food Tenant Owners"} borderColor="border-orange-500" />
+              <SummaryCard title="Cashiers" count={summary.cashiers.count} description={summary.cashiers.description || "Payment Processors"} borderColor="border-green-500" />
             </>
           )}
         </div>
 
-        {/* Komponen Modal MFA dengan sinyal onSuccess */}
-        <MfaSetupModal 
-          isOpen={isMfaOpen} 
-          onClose={() => setIsMfaOpen(false)} 
-          onSuccess={() => setCurrentUser(prev => ({ ...prev, is_mfa_enabled: true }))}
-        />
-        
+        <MfaSetupModal isOpen={isMfaOpen} onClose={() => setIsMfaOpen(false)} onSuccess={() => setCurrentUser(prev => ({ ...prev, is_mfa_enabled: true }))} />
       </main>
     </div>
   );
