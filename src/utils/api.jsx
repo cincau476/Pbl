@@ -220,3 +220,14 @@ export const verifyMfaSetup = (otpCode) => request('/users/mfa/setup/verify/', {
 });
 
 export const getTenants = () => request('/tenants/stands/');
+export const getTables = async () => {
+    const data = await request('/orders/tables/');
+    return data?.results || data || [];
+};
+export const addTable = (tableData) => request('/orders/tables/', { method: 'POST', body: JSON.stringify(tableData) });
+export const deleteTable = (id) => request(`/orders/tables/${id}/`, { method: 'DELETE' });
+
+// Helper untuk membangun URL akses QR Code langsung ke API Backend
+export const getTableQrUrl = (tableCode) => `${API_BASE_URL}/orders/qr/table/${tableCode}/`;
+export const getTakeawayQrUrl = (tenantId) => `${API_BASE_URL}/orders/qr/takeaway/${tenantId}/`;
+
