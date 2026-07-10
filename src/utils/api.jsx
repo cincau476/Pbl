@@ -228,6 +228,6 @@ export const addTable = (tableData) => request('/orders/tables/', { method: 'POS
 export const deleteTable = (id) => request(`/orders/tables/${id}/`, { method: 'DELETE' });
 
 // Helper untuk membangun URL akses QR Code langsung ke API Backend
-export const getTableQrUrl = (tableCode) => `${API_BASE_URL}/orders/qr/table/${tableCode}/`;
-export const getTakeawayQrUrl = (tenantId) => `${API_BASE_URL}/orders/qr/takeaway/${tenantId}/`;
+export const getTableQrUrl = (tableCode) =>`${API_BASE_URL}/orders/tables/${tableCode}/qr/`;
+export const getTakeawayQrUrl = (tenantId) =>`${API_BASE_URL}/orders/tenants/${tenantId}/takeaway-qr/`;
 
