@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FiPlus, FiBell, FiUser } from 'react-icons/fi';
+import { FiPlus, FiBell, FiUser, FiGrid, FiDownload } from 'react-icons/fi'; // Tambahkan FiGrid dan FiDownload
+import QrManagementModal from '../components/QrManagementModal.jsx';
 import StandCard from '../components/StandCard.jsx';
 import MenuCard from '../components/MenuCard.jsx';
 import StandModal from '../components/StandModal.jsx';
@@ -7,6 +8,7 @@ import MenuModal from '../components/MenuModal.jsx';
 import * as api from '../utils/api';
 
 const StandsAndMenuPage = () => {
+  const [isQrModalOpen, setQrModalOpen] = useState(false);
   const [stands, setStands] = useState([]);
   const [menus, setMenus] = useState([]);
   const [selectedStand, setSelectedStand] = useState(null);
@@ -146,9 +148,14 @@ const StandsAndMenuPage = () => {
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-gray-800">Stand Management</h2>
-            <button onClick={() => { setEditingStand(null); setStandModalOpen(true); }} className="bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600">
-              <FiPlus size={20} /> Add New Stand
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setQrModalOpen(true)} className="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700">
+                <FiGrid size={20} /> Manajemen QR Meja
+              </button>
+              <button onClick={() => { setEditingStand(null); setStandModalOpen(true); }} className="bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600">
+                <FiPlus size={20} /> Add New Stand
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {loadingStands ? <p>Loading...</p> : stands.map(stand => (
@@ -166,11 +173,26 @@ const StandsAndMenuPage = () => {
 
         {selectedStand && (
           <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">Menu for <span className="text-blue-600">{selectedStand.name}</span></h2>
-              <button onClick={() => { setEditingMenu(null); setMenuModalOpen(true); }} className="bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600">
-                <FiPlus size={20} /> Add Menu Item
-              </button>
+            <div className="flex justify-between items-center mb-4 bg-white p-4 rounded-lg shadow-sm border">
+              <div>
+                  <h2 className="text-lg font-bold">Menu for <span className="text-blue-600">{selectedStand.name}</span></h2>
+                  <p className="text-sm text-gray-500">Gunakan QR Takeaway ini agar pembeli bisa memesan tanpa antre di stand.</p>
+              </div>
+              <div className="flex gap-3">
+                {/* TOMBOL DOWNLOAD QR TAKEAWAY UNTUK STAND INI */}
+                <a 
+                  href={api.getTakeawayQrUrl(selectedStand.id)} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  download
+                  className="bg-green-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-600"
+                >
+                  <FiDownload size={20} /> Unduh QR Takeaway
+                </a>
+                <button onClick={() => { setEditingMenu(null); setMenuModalOpen(true); }} className="bg-orange-500 text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-600">
+                  <FiPlus size={20} /> Add Menu Item
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {loadingMenus ? <p>Loading...</p> : menus.length > 0 ? (
@@ -201,6 +223,7 @@ const StandsAndMenuPage = () => {
         onSave={handleSaveMenu}
         menu={editingMenu}
       />
+      <QrManagementModal isOpen={isQrModalOpen} onClose={() => setQrModalOpen(false)} />
     </div>
   );
 };
