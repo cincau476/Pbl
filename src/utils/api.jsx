@@ -63,7 +63,7 @@ async function request(endpoint, options = {}) {
     };    
 
     // PERBAIKAN: Ambil dari sessionStorage dengan nama 'admin_token' (Klop dengan LoginPage)
-    const accessToken = sessionStorage.getItem('admin_token');
+    const accessToken = sessionStorage.getItem('access_token');
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
@@ -120,7 +120,7 @@ async function request(endpoint, options = {}) {
                 const newAccessToken = refreshData.access;
                 
                 // PERBAIKAN: Simpan token baru ke sessionStorage 'admin_token'
-                sessionStorage.setItem('admin_token', newAccessToken);
+                sessionStorage.setItem('access_token', newAccessToken);
 
                 options.headers['Authorization'] = `Bearer ${newAccessToken}`;
                 
@@ -131,7 +131,7 @@ async function request(endpoint, options = {}) {
                 processQueue(refreshErr, null);
                 console.warn("Sesi tidak valid atau expired. Mengarahkan ke login...");
                 // PERBAIKAN: Bersihkan session dan arahkan kembali ke app utama
-                sessionStorage.removeItem('admin_token'); 
+                sessionStorage.removeItem('access_token'); 
                 sessionStorage.removeItem('user'); 
                 window.location.href = `${MAIN_APP_URL}/login`;
                 return null;
