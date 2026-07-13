@@ -17,7 +17,7 @@ export default function Sidebar({ onLogout, isExpanded, setIsExpanded }) {
     { name: 'Bayar', path: '/payments', icon: <FiCreditCard /> },
     { name: 'Laporan', path: '/reports', icon: <FiBarChart2 /> },
     { name: 'Akun', path: '/accounts', icon: <FiUsers /> },
-    { name: 'Sistem ABAC', path: '/system-settings', icon: <FiSettings /> }, // <-- Menu Baru
+    { name: 'Sistem ABAC', path: '/settings', icon: <FiSettings /> }, // <-- Menu Baru
   ];
 
   const isActive = (path) => location.pathname === path;
