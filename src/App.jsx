@@ -12,7 +12,7 @@ import StandsAndMenuPage from './pages/StandsAndMenuPage.jsx';
 import OrdersPage from './pages/OrdersPage.jsx';
 import PaymentsPage from './pages/PaymentsPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
-import SystemSettingsPage from './pages/SystemSettingsPage';
+
 
 import * as api from './utils/api.jsx';
 
@@ -99,14 +99,6 @@ function App() {
                   <PaymentsPage />
                 </ProtectedAdminRoute>
               }
-            />
-            <Route 
-              path="/settings" 
-              element={
-                <ProtectedAdminRoute>
-                  <SystemSettingsPage />
-                </ProtectedAdminRoute>
-              } 
             />
 
             <Route
