@@ -1,5 +1,5 @@
 // src/utils/api.jsx
-mport { getClientLocation } from './geoUtils';
+import { getClientLocation } from './geoUtils';
 
 const API_BASE_URL = "/api";
 const MAIN_APP_URL = window.location.origin;
