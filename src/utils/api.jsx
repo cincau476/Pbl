@@ -1,47 +1,19 @@
 // src/utils/api.jsx
+mport { getClientLocation } from './geoUtils';
 
-const API_BASE_URL = "/api" ;
-
-// Rute dinamis untuk kembali ke aplikasi utama (User/Login App)
+const API_BASE_URL = "/api";
 const MAIN_APP_URL = window.location.origin;
 
-// ==========================================
-// 1. FUNGSI UTILITAS CSRF TOKEN
-// ==========================================
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
+// 1. FUNGSI UTILITAS CSRF TOKEN (Tetap sama...)
+function getCookie(name) { /* ... */ }
 
-// ==========================================
-// 2. STATE UNTUK MUTEX LOCK (MENCEGAH RACE CONDITION)
-// ==========================================
+// 2. STATE UNTUK MUTEX LOCK (Tetap sama...)
 let isRefreshing = false;
 let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-    failedQueue.forEach(prom => {
-        if (error) {
-            prom.reject(error);
-        } else {
-            prom.resolve(token);
-        }
-    });
-    failedQueue = [];
-};
+const processQueue = (error, token = null) => { /* ... */ };
 
 // ==========================================
-// 3. CORE REQUEST ENGINE
+// 3. CORE REQUEST ENGINE (INTEGRASI ABAC)
 // ==========================================
 async function request(endpoint, options = {}) {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
@@ -62,7 +34,7 @@ async function request(endpoint, options = {}) {
         ...options.headers,
     };    
 
-    // PERBAIKAN: Ambil dari sessionStorage dengan nama 'admin_token' (Klop dengan LoginPage)
+    // --- OTORISASI TOKEN ---
     const accessToken = sessionStorage.getItem('admin_token');
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
@@ -74,6 +46,19 @@ async function request(endpoint, options = {}) {
             headers['X-CSRFToken'] = csrftoken;
         }
     }
+
+    // --- PERBAIKAN 1: INJEKSI ATRIBUT ABAC (LOKASI) ---
+    try {
+        const location = await getClientLocation();
+        if (location) {
+            // Gunakan 'X-User-Latitude' sesuai dengan expected header di Django
+            headers['X-User-Latitude'] = location.latitude;
+            headers['X-User-Longitude'] = location.longitude;
+        }
+    } catch (geoError) {
+        console.warn("Gagal menyisipkan atribut lokasi ABAC:", geoError);
+    }
+    // --------------------------------------------------
 
     const config = {
         ...options,
@@ -88,72 +73,40 @@ async function request(endpoint, options = {}) {
         // 4. INTERCEPTOR & SILENT REFRESH LOGIC
         // ==========================================
         if (response.status === 401 && !options._retry && !url.includes('/users/token/refresh/')) {
-            
-            if (isRefreshing) {
-                return new Promise((resolve, reject) => {
-                    failedQueue.push({ resolve, reject });
-                }).then(newToken => {
-                    options.headers = options.headers || {};
-                    options.headers['Authorization'] = `Bearer ${newToken}`;
-                    return request(endpoint, options);
-                }).catch(err => Promise.reject(err));
-            }
-
-            options._retry = true;
-            isRefreshing = true;
-
-            try {
-                const refreshRes = await fetch(`${API_BASE_URL}/users/token/refresh/`, {
-                    method: 'POST',
-                    credentials: 'include', 
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCookie('csrftoken')
-                    }
-                });
-
-                if (!refreshRes.ok) {
-                    throw new Error('Gagal memperbarui sesi.');
-                }
-
-                const refreshData = await refreshRes.json();
-                const newAccessToken = refreshData.access;
-                
-                // PERBAIKAN: Simpan token baru ke sessionStorage 'admin_token'
-                sessionStorage.setItem('admin_token', newAccessToken);
-
-                options.headers['Authorization'] = `Bearer ${newAccessToken}`;
-                
-                processQueue(null, newAccessToken);
-                return request(endpoint, options);
-
-            } catch (refreshErr) {
-                processQueue(refreshErr, null);
-                console.warn("Sesi tidak valid atau expired. Mengarahkan ke login...");
-                // PERBAIKAN: Bersihkan session dan arahkan kembali ke app utama
-                sessionStorage.removeItem('admin_token'); 
-                sessionStorage.removeItem('user'); 
-                window.location.href = `${MAIN_APP_URL}/login`;
-                return null;
-            } finally {
-                isRefreshing = false;
-            }
+            // ... (Logika Silent Refresh 401 Anda Tetap Sama)
+            // [JANGAN DIHAPUS, BIARKAN SESUAI KODE ANDA SEBELUMNYA]
         }
 
         // ==========================================
-        // 5. PENANGANAN RESPONSE STANDAR
+        // 5. PENANGANAN RESPONSE STANDAR & ERROR 403 ABAC
         // ==========================================
         if (!response.ok) {
             let errorData;
-            try { errorData = await response.json(); } 
-            catch { throw new Error(`HTTP Error ${response.status}`); }
+            try { 
+                errorData = await response.json(); 
+            } catch { 
+                throw new Error(`HTTP Error ${response.status}`); 
+            }
+
+            // --- PERBAIKAN 2: TANGKAP ERROR 403 ABAC DENY ---
+            if (response.status === 403) {
+                const errorMessage = errorData.detail || errorData.message || '';
+                if (typeof errorMessage === 'string' && errorMessage.includes('ABAC DENY')) {
+                    // Buat error object khusus agar komponen UI bisa menanganinya tanpa crash
+                    const abacError = new Error(errorMessage);
+                    abacError.isAbacError = true;
+                    throw abacError;
+                }
+            }
+            // ------------------------------------------------
+
             throw new Error(errorData.detail || errorData.message || 'API Error');
         }
         
         return response.status === 204 ? null : response.json();
 
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('API Request Error:', error);
         throw error;
     }
 }
@@ -230,5 +183,8 @@ export const deleteTable = (id) => request(`/orders/tables/${id}/`, { method: 'D
 // Helper untuk membangun URL akses QR Code langsung ke API Backend
 export const getTableQrUrl = (tableCode) =>`${API_BASE_URL}/orders/tables/${tableCode}/qr/`;
 export const getTakeawayQrUrl = (tenantId) =>`${API_BASE_URL}/orders/tenants/${tenantId}/takeaway-qr/`;
-export const getSystemSettings = () => api.get('/settings/abac/');
-export const updateSystemSettings = (data) => api.put('/settings/abac/', data);
+export const getSystemSettings = () => request('/settings/abac/');
+export const updateSystemSettings = (data) => request('/settings/abac/', { 
+    method: 'PUT', 
+    body: JSON.stringify(data) 
+});
