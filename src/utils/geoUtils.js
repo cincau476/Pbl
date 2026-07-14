@@ -31,7 +31,7 @@ export const getClientLocation = () => {
       },
       {
         enableHighAccuracy: false, 
-        timeout: 5000,
+        timeout: 15000,
         maximumAge: CACHE_TTL,
       }
     );
