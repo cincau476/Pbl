@@ -1,13 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FiSave, FiMapPin, FiClock, FiAlertCircle } from 'react-icons/fi';
-import { getSystemSettings, updateSystemSettings } from '../utils/api'; 
+import { getSystemSettings, updateSystemSettings } from '../utils/api';
+// Import komponen peta
+import { MapContainer, TileLayer, Marker, useMapEvents, Circle } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Fix untuk icon marker Leaflet di React
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Komponen untuk menangkap event klik di Map
+function LocationMarker({ position, setPosition }) {
+  useMapEvents({
+    click(e) {
+      setPosition(e.latlng);
+    },
+  });
+
+  return position.lat !== 0 ? (
+    <Marker position={position}></Marker>
+  ) : null;
+}
 
 export default function AbacSettings() {
   const [settings, setSettings] = useState({
     open_hour: 7,
     close_hour: 16,
-    canteen_lat: 0,
-    canteen_lon: 0,
+    canteen_lat: 1.1187, // Default Batam Center
+    canteen_lon: 104.0485,
     max_radius_meters: 100
   });
 
@@ -23,7 +51,11 @@ export default function AbacSettings() {
     try {
       setIsLoading(true);
       const data = await getSystemSettings();
-      setSettings(data);
+      setSettings({
+        ...data,
+        canteen_lat: data.canteen_lat || 1.1187,
+        canteen_lon: data.canteen_lon || 104.0485
+      });
     } catch (error) {
       setMessage({ type: 'error', text: 'Gagal mengambil pengaturan sistem.' });
     } finally {
@@ -36,6 +68,15 @@ export default function AbacSettings() {
     setSettings((prev) => ({
       ...prev,
       [name]: parseFloat(value) || parseInt(value, 10) || 0
+    }));
+  };
+
+  // Fungsi untuk update posisi dari Map
+  const handleMapClick = (latlng) => {
+    setSettings((prev) => ({
+      ...prev,
+      canteen_lat: latlng.lat,
+      canteen_lon: latlng.lng
     }));
   };
 
@@ -61,6 +102,8 @@ export default function AbacSettings() {
       </div>
     );
   }
+
+  const mapCenter = [settings.canteen_lat, settings.canteen_lon];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col h-full">
@@ -96,26 +139,27 @@ export default function AbacSettings() {
         </div>
 
         {/* Lokasi Kantin */}
-        <div className="mb-6">
+        <div className="mb-6 flex-1 flex flex-col">
           <div className="flex items-center gap-2 mb-3 text-orange-500">
             <FiMapPin />
-            <h3 className="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wider">Titik Lokasi Kantin</h3>
+            <h3 className="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wider">Pilih Titik Lokasi Kantin</h3>
           </div>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Latitude</label>
-                <input type="number" step="any" name="canteen_lat" value={settings.canteen_lat} onChange={handleChange} className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm dark:text-white" required />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Longitude</label>
-                <input type="number" step="any" name="canteen_lon" value={settings.canteen_lon} onChange={handleChange} className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm dark:text-white" required />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Toleransi Radius (Meter)</label>
-              <input type="number" name="max_radius_meters" min="0" value={settings.max_radius_meters} onChange={handleChange} className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm dark:text-white" required />
-            </div>
+          
+          <p className="text-xs text-gray-500 mb-3">Klik pada peta untuk memindahkan pin lokasi kantin.</p>
+          
+          {/* Peta Interaktif */}
+          <div className="w-full h-48 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 mb-4 z-0 relative">
+            <MapContainer center={mapCenter} zoom={15} style={{ height: '100%', width: '100%', zIndex: 1 }}>
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <LocationMarker position={{ lat: settings.canteen_lat, lng: settings.canteen_lon }} setPosition={handleMapClick} />
+              {/* Lingkaran yang menunjukkan radius toleransi */}
+              <Circle center={mapCenter} radius={settings.max_radius_meters} pathOptions={{ color: 'orange', fillColor: 'orange', fillOpacity: 0.2 }} />
+            </MapContainer>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Toleransi Radius (Meter)</label>
+            <input type="number" name="max_radius_meters" min="10" value={settings.max_radius_meters} onChange={handleChange} className="w-full p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none text-sm dark:text-white" required />
           </div>
         </div>
 
