@@ -34,12 +34,13 @@ export default function PaymentTable({ payments, onConfirmPayment, isLoading }) 
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
           {payments.map((payment) => (
-            <tr key={payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <tr key={payment.uuid || payment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
               <td className="p-4 font-medium text-gray-800 dark:text-gray-200">
-                #{payment.id.split('-')[0].toUpperCase()}
+                {/* PERBAIKAN 1: Gunakan uuid (jika ada) dan konversi ke String dengan aman */}
+                #{String(payment.uuid || payment.id).split('-')[0].toUpperCase()}
               </td>
               <td className="p-4 text-gray-600 dark:text-gray-400">
-                {new Date(payment.created_at).toLocaleDateString('id-ID')}
+                {payment.created_at ? new Date(payment.created_at).toLocaleDateString('id-ID') : '-'}
               </td>
               <td className="p-4">
                 <span className="px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-full text-xs font-semibold">
@@ -47,27 +48,29 @@ export default function PaymentTable({ payments, onConfirmPayment, isLoading }) 
                 </span>
               </td>
               <td className="p-4 font-semibold text-orange-600">
-                Rp {payment.total_amount?.toLocaleString('id-ID')}
+                {/* PERBAIKAN 2: Gunakan parseFloat untuk memastikan format angka benar */}
+                Rp {parseFloat(payment.total || payment.total_amount || 0).toLocaleString('id-ID')}
               </td>
               <td className="p-4">
                 {payment.status === 'PAID' ? (
                   <span className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm font-medium">
                     <FiCheckCircle /> Lunas
                   </span>
-                ) : payment.status === 'PENDING' ? (
+                ) : payment.status === 'PENDING' || payment.status === 'AWAITING_PAYMENT' ? (
                   <span className="flex items-center gap-1 text-orange-500 text-sm font-medium">
                     <FiClock /> Pending
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-red-500 text-sm font-medium">
-                    <FiXCircle /> Gagal
+                    <FiXCircle /> Gagal/Batal
                   </span>
                 )}
               </td>
               <td className="p-4 text-center">
-                {payment.status === 'PENDING' && payment.payment_method === 'CASH' && (
+                {/* PERBAIKAN 3: Sesuaikan kondisi tombol konfirmasi (PENDING atau AWAITING_PAYMENT) */}
+                {(payment.status === 'PENDING' || payment.status === 'AWAITING_PAYMENT') && payment.payment_method === 'CASH' && (
                   <button
-                    onClick={() => onConfirmPayment(payment.id)}
+                    onClick={() => onConfirmPayment(payment.uuid || payment.id)}
                     className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors shadow-sm"
                   >
                     Konfirmasi
