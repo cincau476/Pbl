@@ -1,171 +1,94 @@
 // src/pages/PaymentsPage.jsx
-
 import React, { useState, useEffect } from 'react';
-import { FiBell, FiUser, FiDollarSign, FiClock, FiCheckCircle, FiXCircle, FiGrid, FiCreditCard } from 'react-icons/fi';
-import PaymentStatCard from '../components/PaymentStatCard.jsx';
-import PaymentMethodCard from '../components/PaymentMethodCard.jsx';
-import TransactionItem from '../components/TransactionItem.jsx';
+import { FiCreditCard, FiSearch } from 'react-icons/fi';
+import { getAllOrders, confirmCashPayment } from '../utils/api';
 
-// --- PERUBAHAN ---
-// 1. Impor fungsi API yang kita butuhkan
-import { getReportsSummary, getAllOrders, confirmCashPayment } from '../utils/api.jsx';
-// --- AKHIR PERUBAHAN ---
+// IMPORT KOMPONEN YANG BARU DIBUAT
+import PaymentTable from '../components/PaymentTable'; 
+import AbacSettings from '../components/AbacSettings';
 
+export default function PaymentsPage() {
+  const [payments, setPayments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-// Helper untuk format mata uang
-const formatCurrency = (value) => {
-    return new Intl.NumberFormat('id-ID', { 
-        style: 'currency', 
-        currency: 'IDR', 
-        minimumFractionDigits: 0 
-    }).format(value);
-}
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
-const PaymentsPage = () => {
-    // --- PERUBAHAN ---
-    // 2. Tambahkan state untuk data, loading, dan error
-    const [stats, setStats] = useState(null);
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const fetchPayments = async () => {
+    try {
+      setIsLoading(true);
+      // Ambil data order/pembayaran dari API
+      const data = await getAllOrders(); 
+      setPayments(data);
+    } catch (error) {
+      console.error("Gagal mengambil data pembayaran:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    // 3. Buat fungsi untuk mengambil data dari backend
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            // Ambil data summary dan data order secara paralel
-            const [summaryData, ordersData] = await Promise.all([
-                getReportsSummary(),
-                getAllOrders()
-            ]);
-            
-            setStats(summaryData);
-            setOrders(ordersData);
-
-        } catch (err) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 4. Panggil fetchData() saat komponen pertama kali dimuat
-    useEffect(() => {
-        fetchData();
-    }, []); // [] berarti hanya dijalankan sekali saat mount
-
-    // 5. Buat handler untuk tombol konfirmasi
-    const handleConfirmCash = async (orderUuid) => {
-        if (!window.confirm("Apakah Anda yakin ingin mengkonfirmasi pembayaran ini?")) {
-            return;
-        }
-        
-        try {
-            await confirmCashPayment(orderUuid);
-            alert("Pembayaran berhasil dikonfirmasi!");
-            fetchData(); // Muat ulang data setelah konfirmasi
-        } catch (err) {
-            alert(`Error: ${err.message}`);
-        }
-    };
-
-    // 6. Tampilkan status loading dan error
-    if (loading) {
-        return <div className="flex-1 flex items-center justify-center h-screen">Loading...</div>;
+  const handleConfirmPayment = async (orderId) => {
+    if (!window.confirm("Apakah Anda yakin ingin mengkonfirmasi pembayaran ini?")) {
+        return;
     }
     
-    if (error) {
-        return <div className="flex-1 flex items-center justify-center h-screen text-red-500">Error: {error}</div>;
+    try {
+      await confirmCashPayment(orderId);
+      alert("Pembayaran berhasil dikonfirmasi!");
+      // Refresh data setelah berhasil
+      fetchPayments(); 
+    } catch (error) {
+      console.error("Gagal konfirmasi pembayaran:", error);
+      alert("Gagal mengonfirmasi pembayaran.");
     }
+  };
 
-    // 7. Hitung statistik untuk kartu "Cash Payment"
-    const pendingCashOrders = orders.filter(o => 
-        o.status === 'AWAITING_PAYMENT' && o.payment_method === 'CASH'
-    );
-    const pendingCashTotal = pendingCashOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
-    const pendingCashCount = pendingCashOrders.length;
-    
-    // 8. Hitung statistik untuk kartu "QRIS Payment"
-    // Ini asumsi, idealnya backend memberi data spesifik
-    const totalPaidRevenue = stats?.main_stats?.total_revenue || 0; 
-    const qrisPaidToday = orders
-        .filter(o => ['PAID', 'PROCESSING', 'READY', 'COMPLETED'].includes(o.status) && o.payment_method === 'TRANSFER')
-        .reduce((sum, o) => sum + parseFloat(o.total), 0);
-    
-    // 9. Ambil data untuk kartu atas (Total, Pending, Confirmed)
-    const topStats = {
-        total: totalPaidRevenue,
-        pending: stats?.stats_today?.pending || 0,
-        // Confirmed = Paid + Processing + Ready + Completed
-        confirmed: (stats?.stats_today?.preparing || 0) + (stats?.stats_today?.completed || 0), 
-        failed: 0 // Backend summary tidak menyediakan ini, jadi kita set 0
-    };
-    // --- AKHIR PERUBAHAN ---
-
-    return (
-        <div className="flex-1 flex flex-col h-screen">
-            <header className="bg-white p-4 border-b border-gray-200 h-18 flex items-center justify-between">
-                <h1 className="text-xl font-bold text-gray-800">Payments</h1>
-                <div className="flex items-center gap-4">
-                </div>
-            </header>
-
-            <main className="flex-1 p-6 bg-gray-50 overflow-y-auto">
-                {/* --- Payment Stats Section (Data dari state) --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-                    <PaymentStatCard icon={<FiDollarSign />} value={formatCurrency(topStats.total)} title="Total Paid Revenue" />
-                    <PaymentStatCard icon={<FiClock />} value={topStats.pending} title="Pending Today" />
-                    <PaymentStatCard icon={<FiCheckCircle />} value={topStats.confirmed} title="Confirmed Today" />
-                    <PaymentStatCard icon={<FiXCircle />} value={topStats.failed} title="Failed" />
-                </div>
-
-                {/* --- Payment Methods Section (Data dari state) --- */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <PaymentMethodCard 
-                        icon={<FiGrid size={24} />}
-                        title="QRIS Payment"
-                        description="Customers scan QR code and payment is automatically confirmed once received."
-                        stats={[
-                            { label: 'Status', value: 'Active' },
-                            { label: "Today's Paid QRIS", value: formatCurrency(qrisPaidToday) },
-                        ]}
-                    />
-                    <PaymentMethodCard 
-                        icon={<FiCreditCard size={24} />}
-                        title="Cash Payment"
-                        description="Cashier confirms payment manually after receiving cash from customer."
-                        stats={[]}
-                        highlight={{
-                            label: 'Pending Confirmation',
-                            value: formatCurrency(pendingCashTotal),
-                            badge: `${pendingCashCount} waiting`
-                        }}
-                    />
-                </div>
-
-                {/* --- Payment Transactions Section (Data dari state) --- */}
-                <div>
-                    <h2 className="text-lg font-bold text-gray-800 mb-4">Payment Transactions</h2>
-                    <div className="space-y-4">
-                        {/* 10. Map data 'orders' dan kirim 'onConfirm' handler */}
-                        {orders.length > 0 ? (
-                            orders.map((order) => (
-                                <TransactionItem 
-                                    key={order.uuid} 
-                                    transaction={order} 
-                                    onConfirm={handleConfirmCash} 
-                                />
-                            ))
-                        ) : (
-                            <p className="text-gray-500">No transactions found.</p>
-                        )}
-                    </div>
-                </div>
-            </main>
+  return (
+    <div className="max-w-7xl mx-auto p-4 lg:p-8">
+      
+      {/* HEADER PAGE */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-white flex items-center gap-3">
+            <FiCreditCard className="text-orange-500" />
+            Manajemen Pembayaran & Sistem
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Kelola konfirmasi pembayaran dan atur operasional (ABAC) kantin.
+          </p>
         </div>
-    );
-};
 
-export default PaymentsPage;
+        {/* Kolom Pencarian */}
+        <div className="relative">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Cari ID Order..." 
+            className="w-full md:w-64 pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+      </div>
+
+      {/* GRID LAYOUT: Kiri Table Pembayaran (2/3), Kanan Pengaturan ABAC (1/3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* KOLOM KIRI: Daftar Pembayaran */}
+        <div className="lg:col-span-2">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Daftar Transaksi</h2>
+          <PaymentTable 
+            payments={payments} 
+            isLoading={isLoading} 
+            onConfirmPayment={handleConfirmPayment} 
+          />
+        </div>
+
+        {/* KOLOM KANAN: Komponen Pengaturan ABAC */}
+        <div className="lg:col-span-1">
+          <AbacSettings />
+        </div>
+
+      </div>
+    </div>
+  );
+}
