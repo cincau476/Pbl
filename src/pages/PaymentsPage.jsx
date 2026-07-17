@@ -4,8 +4,8 @@ import { FiCreditCard, FiSearch } from 'react-icons/fi';
 import { getAllOrders, confirmCashPayment } from '../utils/api';
 
 // IMPORT KOMPONEN YANG BARU DIBUAT
-import PaymentTable from '../components/PaymentTable'; 
-import AbacSettings from '../components/AbacSettings';
+import PaymentTable from '../components/PaymentTable.jsx'; 
+import AbacSettings from '../components/AbacSettings.jsx';
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState([]);
