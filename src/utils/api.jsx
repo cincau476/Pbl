@@ -183,8 +183,8 @@ export const deleteTable = (id) => request(`/orders/tables/${id}/`, { method: 'D
 // Helper untuk membangun URL akses QR Code langsung ke API Backend
 export const getTableQrUrl = (tableCode) =>`${API_BASE_URL}/orders/tables/${tableCode}/qr/`;
 export const getTakeawayQrUrl = (tenantId) =>`${API_BASE_URL}/orders/tenants/${tenantId}/takeaway-qr/`;
-export const getSystemSettings = () => request('/settings/abac/');
-export const updateSystemSettings = (data) => request('/settings/abac/', { 
+export const getSystemSettings = () => request('/tenants/settings/abac/');
+export const updateSystemSettings = (data) => request('/tenants/settings/abac/', { 
     method: 'PUT', 
     body: JSON.stringify(data) 
 });
